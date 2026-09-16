@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="version" content="2.14.0">
+  <meta name="version" content="2.14.1">
   <title>ระบบประเมินกิจกรรม</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
@@ -992,7 +992,7 @@
   </nav>
 
   <footer class="max-w-7xl mx-auto px-5 pb-8 md:px-8 text-center text-xs text-[#9a90a6]">
-    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.14.0</span>
+    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.14.1</span>
     <span id="db-status" class="ml-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 font-semibold">กำลังตรวจการเชื่อมต่อ...</span>
   </footer>
 
@@ -1093,7 +1093,7 @@
 
 <script>
   // ============ เวอร์ชัน (แก้ทุกครั้งที่อัปเดต และบันทึกใน CHANGELOG.md) ============
-  const APP_VERSION = "2.14.0";
+  const APP_VERSION = "2.14.1";
   const APP_UPDATED = "2026-09-17";
 
   // ============ ตั้งค่า Supabase (Project Settings → API) ============
@@ -1223,7 +1223,10 @@
     if (!error) return fallback;
     if (error.code === "23505") return "มีข้อมูลนี้อยู่แล้ว";
     if (error.code === "42501") return "ไม่มีสิทธิ์ทำรายการนี้ กรุณาเข้าสู่ระบบผู้ดูแล";
-    if (error.code === "PGRST202") return "ฐานข้อมูลยังไม่มีฟังก์ชันนี้ กรุณารัน schema.sql เวอร์ชันล่าสุด";
+    if (error.code === "PGRST202") {
+      const match = /function\s+(?:public\.)?([a-z_]+)/i.exec(error.message || "");
+      return `ฐานข้อมูลยังไม่มีฟังก์ชัน ${match ? match[1] : ""} กรุณารัน schema.sql เวอร์ชันล่าสุด (v${APP_VERSION}) แล้วรีเฟรชหน้าเว็บ`;
+    }
     if (error.code === "PGRST205" || error.code === "42P01") return "ฐานข้อมูลยังไม่มีตาราง กรุณารัน schema.sql";
     if (/close_before_open/.test(error.message || "")) return "เวลาปิดต้องอยู่หลังเวลาเปิด";
     if (/invalid api key|jwt|apikey/i.test(error.message || "")) return "คีย์ Supabase ไม่ถูกต้อง";
