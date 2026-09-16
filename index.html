@@ -197,8 +197,8 @@
         <h3 class="display-font text-xl font-bold">เข้าสู่ระบบผู้ดูแล</h3>
         <p id="admin-not-authorized" class="hidden mt-2 text-sm font-semibold text-[#b84e6b]">บัญชีนี้ยังไม่ได้รับสิทธิ์ผู้ดูแล</p>
         <form id="login-form" class="mt-5 space-y-3">
-          <label class="block text-sm font-bold" for="login-email">อีเมล</label>
-          <input id="login-email" type="email" autocomplete="username" required class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
+          <label class="block text-sm font-bold" for="login-email">ชื่อผู้ใช้</label>
+          <input id="login-email" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" required class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
           <label class="block text-sm font-bold" for="login-password">รหัสผ่าน</label>
           <input id="login-password" type="password" autocomplete="current-password" required class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
           <button type="submit" class="btn-primary w-full rounded-full px-5 py-3 font-bold disabled:opacity-60">เข้าสู่ระบบ</button>
@@ -652,17 +652,24 @@
     $("admin-not-authorized").classList.toggle("hidden", !(session && !state.isAdmin));
   }
 
+  // ชื่อผู้ใช้ "admin" → admin@example.com (ถ้าพิมพ์อีเมลเต็มก็ใช้ได้)
+  const LOGIN_EMAIL_DOMAIN = "example.com";
+  function toLoginEmail(value) {
+    const name = value.trim().toLowerCase();
+    return name.includes("@") ? name : `${name}@${LOGIN_EMAIL_DOMAIN}`;
+  }
+
   $("login-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!db) return showToast("ยังไม่ได้ตั้งค่า Supabase");
     const button = event.currentTarget.querySelector("button[type=submit]");
     setLoading(button, true);
     const { error } = await db.auth.signInWithPassword({
-      email: $("login-email").value.trim(),
+      email: toLoginEmail($("login-email").value),
       password: $("login-password").value
     });
     setLoading(button, false);
-    if (error) return showToast("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+    if (error) return showToast("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     $("login-password").value = "";
     await refreshAdmin();
   });
