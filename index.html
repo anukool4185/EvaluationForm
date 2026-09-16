@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="version" content="1.3.1">
+  <meta name="version" content="1.4.0">
   <title>ระบบประเมินกิจกรรม</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
@@ -66,7 +66,12 @@
     .toast { opacity: 0; transform: translateY(15px); pointer-events: none; transition: opacity .25s, transform .25s; }
     .toast.show { opacity: 1; transform: translateY(0); }
 
-    button:focus-visible, input:focus-visible { outline: 3px solid rgba(217,162,190,.65); outline-offset: 3px; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid rgba(217,162,190,.65); outline-offset: 3px; }
+
+    .mobile-nav-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: .35rem .9rem; border-radius: 16px; color: var(--muted); font-size: .68rem; font-weight: 700; transition: color .2s, background .2s; }
+    .mobile-nav-tab.active { color: var(--ink); background: #ffdce8; }
+    #mobile-nav { padding-bottom: calc(.5rem + env(safe-area-inset-bottom)); }
+    body.participant-mode #mobile-nav { display: none; }
     @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   </style>
@@ -77,10 +82,10 @@
     <div class="max-w-7xl mx-auto px-5 py-5 md:px-8 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
       <div>
         <p class="label-sm">แบบประเมินหลังกิจกรรม</p>
-        <h1 class="display-font text-3xl md:text-4xl font-bold leading-tight mt-1">ระบบประเมินกิจกรรม</h1>
+        <h1 id="activity-title" class="display-font text-3xl md:text-4xl font-bold leading-tight mt-1">ระบบประเมินกิจกรรม</h1>
       </div>
       <div class="flex items-center gap-6">
-        <nav aria-label="เมนูหลัก" class="flex gap-6 text-sm font-bold">
+        <nav aria-label="เมนูหลัก" class="hidden md:flex gap-6 text-sm font-bold">
           <button type="button" class="nav-tab active pb-2" data-view="dashboard" aria-pressed="true">สรุปผล</button>
           <button type="button" class="nav-tab pb-2" data-view="form" aria-pressed="false">ทำแบบประเมิน</button>
         </nav>
@@ -91,7 +96,7 @@
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-5 py-7 md:px-8 md:py-10">
+  <main class="max-w-7xl mx-auto px-5 py-7 pb-28 md:px-8 md:py-10 md:pb-10">
     <div id="config-warning" class="hidden mb-6 rounded-2xl border border-[#ebc2d1] bg-[#fff4f7] p-4 text-sm font-semibold text-[#b84e6b]">
       ยังไม่ได้ตั้งค่า Supabase: แก้ค่า SUPABASE_URL และ SUPABASE_ANON_KEY ในไฟล์ index.html
     </div>
@@ -152,7 +157,7 @@
       <section>
         <div class="mb-4">
           <p class="label-sm">ความคิดเห็นของคุณ</p>
-          <h2 class="display-font text-2xl md:text-3xl font-bold mt-1">แบบประเมินกิจกรรม</h2>
+          <h2 id="form-activity-title" class="display-font text-2xl md:text-3xl font-bold mt-1">แบบประเมินกิจกรรม</h2>
         </div>
 
         <div id="thank-you" class="hidden pastel-card p-8 text-center">
@@ -207,6 +212,16 @@
 
       <div id="admin-content" class="hidden">
         <section class="pastel-card mb-6 p-6 sm:p-7">
+          <h3 class="display-font text-xl font-bold">ชื่อกิจกรรม</h3>
+          <p class="mt-1 text-sm text-[#7f758c]">แสดงเป็นหัวข้อหลักของเว็บและแบบฟอร์ม</p>
+          <form id="activity-name-form" class="mt-4 flex flex-col gap-3 sm:flex-row">
+            <label class="sr-only" for="activity-name-input">ชื่อกิจกรรม</label>
+            <input id="activity-name-input" type="text" maxlength="200" required class="min-w-0 flex-1 rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
+            <button type="submit" class="btn-primary rounded-full px-5 py-3 font-bold disabled:opacity-60">บันทึกชื่อ</button>
+          </form>
+        </section>
+
+        <section class="pastel-card mb-6 p-6 sm:p-7">
           <h3 class="display-font text-xl font-bold">ตัวอย่างแบบฟอร์ม</h3>
           <p class="mt-1 text-sm text-[#7f758c]">หน้าตาที่ผู้เข้าร่วมจะเห็น</p>
           <div id="admin-preview-questions" class="mt-5 space-y-4"></div>
@@ -215,10 +230,27 @@
         <div class="grid gap-6 lg:grid-cols-2">
           <section class="pastel-card p-6">
             <h3 class="display-font text-xl font-bold">หัวข้อคำถาม</h3>
-            <form id="question-form" class="mt-5">
-              <label class="block font-bold mb-2" for="question-text">คำถามใหม่</label>
-              <input id="question-text" type="text" maxlength="500" required class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
-              <button type="submit" class="btn-primary mt-4 rounded-full px-5 py-3 font-bold disabled:opacity-60">เพิ่มคำถาม</button>
+            <form id="question-form" class="mt-5 space-y-4">
+              <div>
+                <label class="block font-bold mb-2" for="question-text">คำถามใหม่</label>
+                <input id="question-text" type="text" maxlength="500" required class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
+              </div>
+              <div>
+                <label class="block font-bold mb-2" for="question-type">รูปแบบคำตอบ</label>
+                <select id="question-type" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
+                  <option value="scale">ระดับความคิดเห็น (ใช้ระดับคะแนนที่ตั้งไว้)</option>
+                  <option value="choice">ติ๊กเลือกตัวเลือก</option>
+                  <option value="text">พิมพ์ข้อความ</option>
+                </select>
+              </div>
+              <div id="question-options-field" class="hidden">
+                <label class="block font-bold mb-2" for="question-options">ตัวเลือก (บรรทัดละ 1 ตัวเลือก อย่างน้อย 2 ตัวเลือก)</label>
+                <textarea id="question-options" rows="4" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none" placeholder="เช่น
+อาหาร
+สถานที่
+วิทยากร"></textarea>
+              </div>
+              <button type="submit" class="btn-primary rounded-full px-5 py-3 font-bold disabled:opacity-60">เพิ่มคำถาม</button>
             </form>
             <div id="admin-question-list" class="mt-6 space-y-3"></div>
           </section>
@@ -266,8 +298,19 @@
     </section>
   </main>
 
+  <nav id="mobile-nav" class="md:hidden fixed inset-x-0 bottom-0 z-40 flex justify-center gap-2 border-t border-white/70 bg-white/90 px-4 pt-2 backdrop-blur" aria-label="เมนูหลัก (มือถือ)">
+    <button type="button" class="mobile-nav-tab active" data-view="dashboard" aria-pressed="true">
+      <i data-lucide="pie-chart" class="w-5 h-5"></i>
+      <span>สรุปผล</span>
+    </button>
+    <button type="button" class="mobile-nav-tab" data-view="form" aria-pressed="false">
+      <i data-lucide="clipboard-edit" class="w-5 h-5"></i>
+      <span>ทำแบบประเมิน</span>
+    </button>
+  </nav>
+
   <footer class="max-w-7xl mx-auto px-5 pb-8 md:px-8 text-center text-xs text-[#9a90a6]">
-    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 1.3.1</span>
+    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 1.4.0</span>
     <span id="db-status" class="ml-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 font-semibold">กำลังตรวจการเชื่อมต่อ...</span>
   </footer>
 
@@ -276,7 +319,7 @@
 
 <script>
   // ============ เวอร์ชัน (แก้ทุกครั้งที่อัปเดต และบันทึกใน CHANGELOG.md) ============
-  const APP_VERSION = "1.3.1";
+  const APP_VERSION = "1.4.0";
   const APP_UPDATED = "2026-09-16";
 
   // ============ ตั้งค่า Supabase (Project Settings → API) ============
@@ -307,8 +350,10 @@
   const state = {
     questions: [], scales: [], statuses: [], responses: [],
     selected: {}, selectedStatus: "", statusFilter: "all",
-    isAdmin: false, loaded: false
+    isAdmin: false, loaded: false, activityName: "กิจกรรมของคุณ"
   };
+
+  const QUESTION_TYPE_LABELS = { scale: "ระดับความคิดเห็น", choice: "ติ๊กเลือก", text: "พิมพ์ข้อความ" };
 
   const $ = (id) => document.getElementById(id);
   const participantMode = new URLSearchParams(location.search).get("view") === "form";
@@ -341,6 +386,15 @@
     url.search = ""; url.hash = "";
     url.searchParams.set("view", "form");
     return url.toString();
+  }
+
+  function applyActivityName() {
+    const name = state.activityName || "กิจกรรมของคุณ";
+    $("activity-title").textContent = name;
+    $("form-activity-title").textContent = name;
+    document.title = `${name} · ระบบประเมินกิจกรรม`;
+    const input = $("activity-name-input");
+    if (input && document.activeElement !== input) input.value = name;
   }
 
   const avg = (values) => values.length ? values.reduce((s, v) => s + v, 0) / values.length : 0;
@@ -390,16 +444,18 @@
   async function loadAll() {
     if (!db) return;
     try {
-      const [q, s, st] = await Promise.all([
-        db.from("questions").select("id,question_text,sort_order,created_at").order("sort_order").order("created_at"),
+      const [q, s, st, cfg] = await Promise.all([
+        db.from("questions").select("id,question_text,sort_order,question_type,options,created_at").order("sort_order").order("created_at"),
         db.from("scales").select("id,scale_label,rating").order("rating"),
-        db.from("statuses").select("id,label,created_at").order("created_at")
+        db.from("statuses").select("id,label,created_at").order("created_at"),
+        db.from("settings").select("activity_name").eq("id", true).maybeSingle()
       ]);
-      for (const res of [q, s, st]) if (res.error) throw res.error;
+      for (const res of [q, s, st, cfg]) if (res.error) throw res.error;
 
       state.questions = q.data;
       state.scales = s.data.map((x) => ({ ...x, rating: Number(x.rating) }));
       state.statuses = st.data;
+      state.activityName = cfg.data?.activity_name || "กิจกรรมของคุณ";
       state.responses = participantMode ? [] : await fetchAllResponses();
 
       // ล้างค่าที่เลือกไว้ของคำถาม/สถานะที่ถูกลบไปแล้ว
@@ -411,6 +467,7 @@
 
       state.loaded = true;
       setDbStatus(true, "เชื่อมต่อฐานข้อมูลแล้ว");
+      applyActivityName();
       renderAll();
     } catch (error) {
       console.error(error);
@@ -427,7 +484,9 @@
   }
 
   function subscribeRealtime() {
-    const tables = participantMode ? ["questions", "scales", "statuses"] : ["questions", "scales", "statuses", "responses"];
+    const tables = participantMode
+      ? ["questions", "scales", "statuses", "settings"]
+      : ["questions", "scales", "statuses", "responses", "settings"];
     const channel = db.channel("evaluation-live");
     tables.forEach((table) => channel.on("postgres_changes", { event: "*", schema: "public", table }, scheduleReload));
     channel.subscribe();
@@ -458,6 +517,27 @@
     return button;
   }
 
+  function toggleButton(text, selected, onToggle) {
+    const button = el("button", "choice rounded-full px-4 py-2 text-sm font-bold", text);
+    button.type = "button";
+    button.classList.toggle("selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+    button.addEventListener("click", () => {
+      const now = !button.classList.contains("selected");
+      button.classList.toggle("selected", now);
+      button.setAttribute("aria-pressed", String(now));
+      onToggle(now);
+    });
+    return button;
+  }
+
+  function isAnswered(question) {
+    const value = state.selected[question.id];
+    if (question.question_type === "choice") return Array.isArray(value) && value.length > 0;
+    if (question.question_type === "text") return typeof value === "string" && value.trim().length > 0;
+    return typeof value === "number" && value > 0;
+  }
+
   function renderStatusPicker() {
     const holder = $("status-options");
     holder.replaceChildren();
@@ -472,7 +552,8 @@
   function renderResponseQuestions() {
     const holder = $("response-questions");
     holder.replaceChildren();
-    const usable = state.questions.length > 0 && state.scales.length > 0;
+    const hasScaleQuestion = state.questions.some((q) => q.question_type === "scale");
+    const usable = state.questions.length > 0 && (!hasScaleQuestion || state.scales.length > 0);
     $("submit-response").disabled = !usable;
 
     if (!usable) {
@@ -486,15 +567,43 @@
     state.questions.forEach((question, index) => {
       const card = el("article", "question-card rounded-3xl border border-[#e8ddea] bg-[#fffdfd] p-5 shadow-[0_10px_28px_rgba(93,72,111,.07)]");
       card.appendChild(el("p", "font-bold", `${index + 1}. ${question.question_text}`));
-      const options = el("div", "flex flex-wrap gap-2 mt-4");
-      options.setAttribute("role", "group");
-      options.setAttribute("aria-label", question.question_text);
-      scales.forEach((scale) => {
-        options.appendChild(choiceButton(`${scale.rating} · ${scale.scale_label}`, state.selected[question.id] === scale.rating, () => {
-          state.selected[question.id] = scale.rating;
-        }));
-      });
-      card.appendChild(options);
+
+      if (question.question_type === "choice") {
+        const current = Array.isArray(state.selected[question.id]) ? state.selected[question.id] : [];
+        const options = el("div", "flex flex-wrap gap-2 mt-4");
+        options.setAttribute("role", "group");
+        options.setAttribute("aria-label", question.question_text);
+        (question.options || []).forEach((label) => {
+          options.appendChild(toggleButton(label, current.includes(label), (nowSelected) => {
+            const list = Array.isArray(state.selected[question.id]) ? [...state.selected[question.id]] : [];
+            const at = list.indexOf(label);
+            if (nowSelected && at === -1) list.push(label);
+            else if (!nowSelected && at !== -1) list.splice(at, 1);
+            state.selected[question.id] = list;
+          }));
+        });
+        card.appendChild(options);
+      } else if (question.question_type === "text") {
+        const textarea = el("textarea");
+        textarea.rows = 3;
+        textarea.maxLength = 1000;
+        textarea.placeholder = "พิมพ์ความคิดเห็นของคุณ...";
+        textarea.className = "mt-4 w-full rounded-2xl border border-[#e2d7e8] bg-[#fffdfd] px-4 py-3 outline-none";
+        textarea.value = typeof state.selected[question.id] === "string" ? state.selected[question.id] : "";
+        textarea.addEventListener("input", () => { state.selected[question.id] = textarea.value; });
+        card.appendChild(textarea);
+      } else {
+        const options = el("div", "flex flex-wrap gap-2 mt-4");
+        options.setAttribute("role", "group");
+        options.setAttribute("aria-label", question.question_text);
+        scales.forEach((scale) => {
+          options.appendChild(choiceButton(`${scale.rating} · ${scale.scale_label}`, state.selected[question.id] === scale.rating, () => {
+            state.selected[question.id] = scale.rating;
+          }));
+        });
+        card.appendChild(options);
+      }
+
       holder.appendChild(card);
     });
   }
@@ -520,11 +629,11 @@
   function renderAnalytics() {
     const responses = filteredResponses();
     const maximum = maxRating();
-    const questionIds = new Set(state.questions.map((q) => q.id));
+    const scaleQuestionIds = new Set(state.questions.filter((q) => q.question_type === "scale").map((q) => q.id));
 
     const ratings = responses.flatMap((r) =>
       Object.entries(r.answers || {})
-        .filter(([key]) => questionIds.has(key))
+        .filter(([key]) => scaleQuestionIds.has(key))
         .map(([, value]) => Number(value))
         .filter((v) => Number.isFinite(v) && v > 0)
     );
@@ -550,32 +659,65 @@
       summary.appendChild(el("p", "text-sm leading-relaxed text-[#7f758c]", "ผลรายข้อจะแสดงเมื่อผู้ดูแลเพิ่มคำถามและมีผู้ตอบแล้ว"));
     }
 
-    const perQuestion = state.questions.map((question) => {
-      const values = valuesForQuestion(responses, question.id);
-      return { question, count: values.length, percent: toPercent(avg(values), maximum) };
-    });
+    const scalePercents = [];
 
-    perQuestion.forEach(({ question, count, percent: qPercent }) => {
+    state.questions.forEach((question) => {
       const item = el("div");
-      const top = el("div", "flex justify-between gap-4 text-sm");
-      top.append(el("span", "font-bold leading-snug", question.question_text), el("span", "shrink-0 font-bold text-[#8d6279]", `${qPercent}% (${count})`));
-      const track = el("div", "progress-track mt-2");
-      const fill = el("div", "progress-fill");
-      fill.style.width = `${qPercent}%`;
-      track.appendChild(fill);
-      item.append(top, track);
+      const header = el("div", "flex justify-between gap-4 text-sm");
+
+      if (question.question_type === "choice") {
+        const answered = responses.filter((r) => Array.isArray((r.answers || {})[question.id]) && r.answers[question.id].length);
+        header.append(el("span", "font-bold leading-snug", question.question_text), el("span", "shrink-0 font-bold text-[#8d6279]", `${answered.length} คนตอบ`));
+        item.appendChild(header);
+
+        const tally = new Map((question.options || []).map((opt) => [opt, 0]));
+        answered.forEach((r) => (r.answers[question.id] || []).forEach((opt) => { if (tally.has(opt)) tally.set(opt, tally.get(opt) + 1); }));
+
+        const list = el("div", "mt-2 space-y-1.5");
+        [...tally.entries()].sort((a, b) => b[1] - a[1]).forEach(([label, count]) => {
+          const share = answered.length ? Math.round((count / answered.length) * 100) : 0;
+          const row = el("div", "flex items-center justify-between gap-3 rounded-lg bg-white/55 px-3 py-1.5 text-xs");
+          row.append(el("span", "font-semibold", label), el("span", "font-bold text-[#8d6279]", `${count} (${share}%)`));
+          list.appendChild(row);
+        });
+        item.appendChild(list);
+      } else if (question.question_type === "text") {
+        const entries = responses
+          .map((r) => (r.answers || {})[question.id])
+          .filter((v) => typeof v === "string" && v.trim().length > 0);
+        header.append(el("span", "font-bold leading-snug", question.question_text), el("span", "shrink-0 font-bold text-[#8d6279]", `${entries.length} ข้อความ`));
+        item.appendChild(header);
+
+        if (entries.length) {
+          const list = el("div", "mt-2 max-h-40 space-y-1.5 overflow-y-auto pr-1");
+          entries.slice(-20).reverse().forEach((text) => list.appendChild(el("p", "rounded-lg bg-white/55 px-3 py-2 text-xs leading-relaxed", `“${text}”`)));
+          item.appendChild(list);
+        }
+      } else {
+        const values = valuesForQuestion(responses, question.id);
+        const qPercent = toPercent(avg(values), maximum);
+        scalePercents.push({ question, count: values.length, percent: qPercent });
+        header.append(el("span", "font-bold leading-snug", question.question_text), el("span", "shrink-0 font-bold text-[#8d6279]", `${qPercent}% (${values.length})`));
+        const track = el("div", "progress-track mt-2");
+        const fill = el("div", "progress-fill");
+        fill.style.width = `${qPercent}%`;
+        track.appendChild(fill);
+        item.append(header, track);
+      }
+
       summary.appendChild(item);
     });
 
     const insight = $("insight-text");
+    const hasScaleQuestion = state.questions.some((q) => q.question_type === "scale");
     if (!db) {
       insight.textContent = "ตั้งค่าการเชื่อมต่อ Supabase ก่อนเริ่มใช้งาน";
-    } else if (!state.questions.length || !state.scales.length) {
+    } else if (!state.questions.length || (hasScaleQuestion && !state.scales.length)) {
       insight.textContent = "เปิดหน้าตั้งค่า แล้วเพิ่มคำถามและระดับคะแนนเพื่อเริ่มรับคำตอบ";
     } else if (!responses.length) {
       insight.textContent = "แบบประเมินพร้อมใช้งานแล้ว แชร์ QR Code หรือคัดลอกลิงก์ให้ผู้เข้าร่วม";
     } else {
-      const answered = perQuestion.filter((x) => x.count > 0).sort((a, b) => a.percent - b.percent);
+      const answered = scalePercents.filter((x) => x.count > 0).sort((a, b) => a.percent - b.percent);
       const tone = percent >= 80 ? "ผลตอบรับโดดเด่นมาก" : percent >= 60 ? "ผลตอบรับอยู่ในเกณฑ์ดี" : "ยังมีโอกาสพัฒนาเพิ่มเติม";
       const weakest = answered[0];
       insight.textContent = `${tone} คะแนนภาพรวม ${percent}% จากผู้ตอบ ${responses.length.toLocaleString("th-TH")} คน`
@@ -586,17 +728,26 @@
   function renderAdminPreview() {
     const holder = $("admin-preview-questions");
     holder.replaceChildren();
-    if (!state.questions.length || !state.scales.length) {
-      holder.appendChild(el("p", "rounded-3xl border border-dashed border-[#d6c7de] bg-white/45 p-6 text-sm text-[#7f758c]",
-        state.questions.length ? "เพิ่มระดับคะแนนเพื่อดูตัวอย่างตัวเลือก" : "เพิ่มคำถามเพื่อดูตัวอย่างแบบฟอร์ม"));
+    if (!state.questions.length) {
+      holder.appendChild(el("p", "rounded-3xl border border-dashed border-[#d6c7de] bg-white/45 p-6 text-sm text-[#7f758c]", "เพิ่มคำถามเพื่อดูตัวอย่างแบบฟอร์ม"));
       return;
+    }
+    const hasScaleQuestion = state.questions.some((q) => q.question_type === "scale");
+    if (hasScaleQuestion && !state.scales.length) {
+      holder.appendChild(el("p", "rounded-3xl border border-dashed border-[#d6c7de] bg-white/45 p-4 text-sm text-[#7f758c]", "เพิ่มระดับคะแนนเพื่อดูตัวอย่างของคำถามแบบระดับความคิดเห็น"));
     }
     const scales = scalesAsc();
     state.questions.forEach((question, index) => {
       const card = el("article", "question-card rounded-3xl border border-[#e8ddea] bg-[#fffdfd] p-5");
       card.appendChild(el("p", "font-bold", `${index + 1}. ${question.question_text}`));
       const options = el("div", "flex flex-wrap gap-2 mt-4");
-      scales.forEach((s) => options.appendChild(el("span", "choice rounded-full px-4 py-2 text-sm font-bold", `${s.rating} · ${s.scale_label}`)));
+      if (question.question_type === "choice") {
+        (question.options || []).forEach((label) => options.appendChild(el("span", "choice rounded-full px-4 py-2 text-sm font-bold", label)));
+      } else if (question.question_type === "text") {
+        options.appendChild(el("div", "w-full rounded-2xl border border-dashed border-[#e2d7e8] bg-white/60 px-4 py-3 text-sm text-[#9a90a6]", "ช่องให้พิมพ์ข้อความ"));
+      } else {
+        scales.forEach((s) => options.appendChild(el("span", "choice rounded-full px-4 py-2 text-sm font-bold", `${s.rating} · ${s.scale_label}`)));
+      }
       card.appendChild(options);
       holder.appendChild(card);
     });
@@ -651,14 +802,14 @@
     renderStatusFilters();
     renderAnalytics();
     renderAdminPreview();
-    renderAdminList(state.questions, "admin-question-list", "questions", (r) => r.question_text);
+    renderAdminList(state.questions, "admin-question-list", "questions", (r) => `${r.question_text} · ${QUESTION_TYPE_LABELS[r.question_type] || r.question_type}`);
     renderAdminList(state.scales, "admin-scale-list", "scales", (r) => `${r.rating} — ${r.scale_label}`);
     renderAdminList(state.statuses, "admin-status-list", "statuses", (r) => r.label);
   }
 
   // ---------- views ----------
   function showView(viewName) {
-    document.querySelectorAll(".nav-tab").forEach((tab) => {
+    document.querySelectorAll(".nav-tab, .mobile-nav-tab").forEach((tab) => {
       const active = tab.dataset.view === viewName;
       tab.classList.toggle("active", active);
       tab.setAttribute("aria-pressed", String(active));
@@ -668,7 +819,7 @@
     if (viewName === "admin") refreshAdmin();
   }
 
-  document.querySelectorAll(".nav-tab").forEach((tab) => tab.addEventListener("click", () => showView(tab.dataset.view)));
+  document.querySelectorAll(".nav-tab, .mobile-nav-tab").forEach((tab) => tab.addEventListener("click", () => showView(tab.dataset.view)));
 
   let secretTapCount = 0, secretTapTimer;
   $("secret-settings-button").addEventListener("click", () => {
@@ -794,24 +945,45 @@
   // ---------- admin forms ----------
   async function adminAction(event, fn, params, successMessage, resetInputs) {
     event.preventDefault();
-    if (!db) return showToast(dbInitError || "ยังไม่ได้ตั้งค่า Supabase");
+    if (!db) { showToast(dbInitError || "ยังไม่ได้ตั้งค่า Supabase"); return false; }
     const button = event.currentTarget.querySelector("button[type=submit]");
     setLoading(button, true);
     const { error } = await adminRpc(fn, params);
     setLoading(button, false);
     if (error) {
       if (error.code !== "42501") showToast(friendlyError(error, "บันทึกไม่สำเร็จ"));
-      return;
+      return false;
     }
     resetInputs.forEach((input) => (input.value = ""));
     showToast(successMessage);
     loadAll();
+    return true;
   }
 
-  $("question-form").addEventListener("submit", (event) => {
+  $("question-type").addEventListener("change", () => {
+    $("question-options-field").classList.toggle("hidden", $("question-type").value !== "choice");
+  });
+
+  $("question-form").addEventListener("submit", async (event) => {
     const text = $("question-text").value.trim();
+    const type = $("question-type").value;
+    let options = null;
+    if (type === "choice") {
+      options = $("question-options").value.split("\n").map((line) => line.trim()).filter(Boolean);
+      if (options.length < 2) { event.preventDefault(); return showToast("ระบุตัวเลือกอย่างน้อย 2 ตัวเลือก (บรรทัดละ 1 ตัวเลือก)"); }
+    }
     if (!text) { event.preventDefault(); return; }
-    adminAction(event, "admin_add_question", { p_question_text: text }, "เพิ่มคำถามแล้ว", [$("question-text")]);
+    const ok = await adminAction(event, "admin_add_question", { p_question_text: text, p_question_type: type, p_options: options }, "เพิ่มคำถามแล้ว", [$("question-text"), $("question-options")]);
+    if (ok) {
+      $("question-type").value = "scale";
+      $("question-options-field").classList.add("hidden");
+    }
+  });
+
+  $("activity-name-form").addEventListener("submit", (event) => {
+    const name = $("activity-name-input").value.trim();
+    if (!name) { event.preventDefault(); return; }
+    adminAction(event, "admin_update_activity_name", { p_activity_name: name }, "บันทึกชื่อกิจกรรมแล้ว", []);
   });
 
   $("scale-form").addEventListener("submit", (event) => {
@@ -841,15 +1013,21 @@
       message.style.color = "var(--danger)";
       return;
     }
-    if (state.questions.some((q) => !state.selected[q.id])) {
-      message.textContent = "กรุณาเลือกคะแนนให้ครบทุกข้อก่อนส่ง";
+    if (state.questions.some((q) => !isAnswered(q))) {
+      message.textContent = "กรุณาตอบให้ครบทุกข้อก่อนส่ง";
       message.style.color = "var(--danger)";
       return;
     }
 
     const answers = {};
-    state.questions.forEach((q) => (answers[q.id] = state.selected[q.id]));
-    const values = Object.values(answers);
+    state.questions.forEach((q) => {
+      const value = state.selected[q.id];
+      answers[q.id] = q.question_type === "text" ? value.trim() : value;
+    });
+    const scaleValues = state.questions
+      .filter((q) => q.question_type === "scale")
+      .map((q) => Number(answers[q.id]))
+      .filter((v) => Number.isFinite(v) && v > 0);
 
     const button = $("submit-response");
     setLoading(button, true);
@@ -859,7 +1037,7 @@
     const { error } = await db.from("responses").insert({
       status_label: state.selectedStatus || null,
       answers,
-      avg_rating: Number(avg(values).toFixed(2))
+      avg_rating: scaleValues.length ? Number(avg(scaleValues).toFixed(2)) : null
     });
 
     setLoading(button, false);
@@ -899,6 +1077,7 @@
     $("app-version").textContent = `เวอร์ชัน ${APP_VERSION} (อัปเดต ${new Date(APP_UPDATED).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" })})`;
     console.info(`ระบบประเมินกิจกรรม v${APP_VERSION}`);
     if (window.lucide) lucide.createIcons();
+    applyActivityName();
     renderQrCode();
     renderAll();
     if (participantMode) showView("form");
