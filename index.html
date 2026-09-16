@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="version" content="2.4.1">
+  <meta name="version" content="2.6.0">
   <title>ระบบประเมินกิจกรรม</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
@@ -79,6 +79,18 @@
     .toast { opacity: 0; transform: translateY(15px); pointer-events: none; transition: opacity .25s, transform .25s; }
     .toast.show { opacity: 1; transform: translateY(0); }
 
+    .home-card { transition: transform .16s ease, box-shadow .16s ease; }
+    .home-card:hover { transform: translateY(-2px); box-shadow: 0 20px 40px rgba(93,72,111,.14); }
+
+    #present-overlay { position: fixed; inset: 0; z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 40px; padding: 40px 24px; background: linear-gradient(160deg, #241a30, #3a2740); color: #fff; text-align: center; }
+    #present-overlay.show { display: flex; }
+    #present-overlay .qr-frame { width: min(46vh, 46vw, 380px); border-width: 12px; }
+    #present-activity-name { font-size: clamp(1.8rem, 5vw, 3.2rem); }
+    .present-stat-value { font-size: clamp(2.6rem, 8vw, 5.5rem); line-height: 1; }
+    .present-stat-label { font-size: clamp(.9rem, 1.6vw, 1.15rem); color: rgba(255,255,255,.65); }
+    #present-close { color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; width: 48px; height: 48px; display: grid; place-items: center; position: absolute; top: 24px; right: 24px; }
+    #present-close:hover { background: rgba(255,255,255,.22); }
+
     button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid rgba(217,162,190,.65); outline-offset: 3px; }
     @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
@@ -98,7 +110,8 @@
       </div>
       <div class="flex items-center gap-6">
         <nav aria-label="เมนูหลัก" class="hidden md:flex gap-6 text-sm font-bold">
-          <button type="button" class="nav-tab active pb-2" data-view="dashboard" aria-pressed="true">สรุปผล</button>
+          <button type="button" class="nav-tab active pb-2" data-view="home" aria-pressed="true">หน้าแรก</button>
+          <button type="button" class="nav-tab pb-2" data-view="dashboard" aria-pressed="false">สรุปผล</button>
           <button type="button" class="nav-tab pb-2" data-view="form" aria-pressed="false">ทำแบบประเมิน</button>
         </nav>
         <button id="secret-settings-button" type="button" class="grid h-9 w-9 place-items-center rounded-full text-[#b7aec2] hover:text-[#4a4258]" aria-label="เปิดหน้าตั้งค่า (กด 5 ครั้ง)">
@@ -113,8 +126,23 @@
       ยังไม่ได้ตั้งค่า Supabase: แก้ค่า SUPABASE_URL และ SUPABASE_ANON_KEY ในไฟล์ index.html
     </div>
 
+    <!-- ================= HOME ================= -->
+    <section id="home-view" class="view-panel active" aria-label="หน้าแรก">
+      <div class="mb-6">
+        <p class="label-sm">เลือกกิจกรรม</p>
+        <h2 class="display-font text-2xl md:text-3xl font-bold mt-1">กิจกรรมทั้งหมด</h2>
+        <p class="mt-2 text-sm text-[#7f758c]">เลือกกิจกรรมเพื่อดูสรุปผล หรือเปิดโหมดฉายจอสำหรับโปรเจกเตอร์ในหอประชุม</p>
+      </div>
+      <div id="home-empty" class="hidden pastel-card p-8 text-center">
+        <i data-lucide="calendar-plus" class="w-10 h-10 mx-auto text-[#d98aa8]"></i>
+        <h3 class="display-font text-2xl font-bold mt-3">ยังไม่มีกิจกรรม</h3>
+        <p class="mt-2 text-[#7f758c]">กดไอคอนเฟืองมุมขวาบน (กด 5 ครั้ง) เพื่อเข้าหน้าตั้งค่าและสร้างกิจกรรมแรกของคุณ</p>
+      </div>
+      <div id="home-activity-list" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"></div>
+    </section>
+
     <!-- ================= DASHBOARD ================= -->
-    <section id="dashboard-view" class="view-panel active" aria-label="สรุปผลการประเมิน">
+    <section id="dashboard-view" class="view-panel" aria-label="สรุปผลการประเมิน">
       <div id="dashboard-empty" class="hidden pastel-card p-8 text-center mb-6">
         <i data-lucide="calendar-plus" class="w-10 h-10 mx-auto text-[#d98aa8]"></i>
         <h3 class="display-font text-2xl font-bold mt-3">ยังไม่มีกิจกรรม</h3>
@@ -349,7 +377,11 @@
   </main>
 
   <nav id="mobile-nav" class="md:hidden fixed inset-x-0 bottom-0 z-40 flex justify-center gap-2 border-t border-white/70 bg-white/90 px-4 pt-2 backdrop-blur" aria-label="เมนูหลัก (มือถือ)">
-    <button type="button" class="mobile-nav-tab active" data-view="dashboard" aria-pressed="true">
+    <button type="button" class="mobile-nav-tab active" data-view="home" aria-pressed="true">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span>หน้าแรก</span>
+    </button>
+    <button type="button" class="mobile-nav-tab" data-view="dashboard" aria-pressed="false">
       <i data-lucide="pie-chart" class="w-5 h-5"></i>
       <span>สรุปผล</span>
     </button>
@@ -360,7 +392,7 @@
   </nav>
 
   <footer class="max-w-7xl mx-auto px-5 pb-8 md:px-8 text-center text-xs text-[#9a90a6]">
-    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.4.1</span>
+    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.6.0</span>
     <span id="db-status" class="ml-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 font-semibold">กำลังตรวจการเชื่อมต่อ...</span>
   </footer>
 
@@ -374,11 +406,27 @@
       <p class="mt-1 text-sm text-white/70">สแกนเพื่อทำแบบประเมิน</p>
     </div>
   </div>
+
+  <div id="present-overlay" role="dialog" aria-modal="true" aria-label="โหมดฉายจอโปรเจกเตอร์">
+    <button id="present-close" type="button" aria-label="ปิดโหมดฉายจอ"><i data-lucide="x" class="w-6 h-6"></i></button>
+    <p id="present-activity-name" class="display-font font-bold"></p>
+    <div class="flex flex-wrap items-center justify-center gap-x-16 gap-y-10">
+      <div id="present-qrcode" class="qr-frame"></div>
+      <div class="flex flex-col items-center">
+        <p id="present-count" class="display-font font-bold present-stat-value">0</p>
+        <p class="present-stat-label">ผู้ตอบทั้งหมด</p>
+      </div>
+      <div class="flex flex-col items-center">
+        <p id="present-percent" class="display-font font-bold present-stat-value">—</p>
+        <p class="present-stat-label">คะแนนเฉลี่ย</p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
   // ============ เวอร์ชัน (แก้ทุกครั้งที่อัปเดต และบันทึกใน CHANGELOG.md) ============
-  const APP_VERSION = "2.4.1";
+  const APP_VERSION = "2.6.0";
   const APP_UPDATED = "2026-09-16";
 
   // ============ ตั้งค่า Supabase (Project Settings → API) ============
@@ -414,7 +462,8 @@
     questions: [], scales: [], statuses: [], responses: [],
     selected: {}, selectedStatus: "", statusFilter: "all",
     isAdmin: false, loaded: false,
-    selectedResponseIds: new Set(), openResponseIds: new Set(), responseLimit: 30
+    selectedResponseIds: new Set(), openResponseIds: new Set(), responseLimit: 30,
+    presentActivityId: null, presentQrRenderedFor: null
   };
 
   const $ = (id) => document.getElementById(id);
@@ -557,7 +606,8 @@
         state.questions = q.data;
         state.scales = s.data.map((x) => ({ ...x, rating: Number(x.rating) }));
         state.statuses = st.data;
-        state.responses = participantMode ? [] : await fetchAllResponses(activeId);
+        // ดึงคำตอบเสมอ แม้ในโหมดผู้ตอบ เพราะหลังส่งแบบประเมินจะพาไปหน้าสรุปผลทันที
+        state.responses = await fetchAllResponses(activeId);
 
         const questionIds = new Set(state.questions.map((x) => x.id));
         Object.keys(state.selected).forEach((k) => { if (!questionIds.has(k)) delete state.selected[k]; });
@@ -596,10 +646,11 @@
   // ---------- render: shared pieces ----------
   function renderQrCode() {
     const qr = $("qrcode");
+    const targetId = activeFormActivityId();
     qr.replaceChildren();
-    qr.disabled = !state.activityId;
-    if (!state.activityId || typeof QRCode === "undefined") return;
-    new QRCode(qr, { text: participantUrl(state.activityId), width: 220, height: 220, colorDark: "#4a4258", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+    qr.disabled = !targetId;
+    if (!targetId || typeof QRCode === "undefined") return;
+    new QRCode(qr, { text: participantUrl(targetId), width: 220, height: 220, colorDark: "#4a4258", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
   }
 
   function openQrZoom() {
@@ -621,7 +672,13 @@
   $("qrcode").addEventListener("click", openQrZoom);
   $("qr-zoom-close").addEventListener("click", closeQrZoom);
   $("qr-zoom-overlay").addEventListener("click", (event) => { if (event.target.id === "qr-zoom-overlay") closeQrZoom(); });
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeQrZoom(); });
+  $("present-close").addEventListener("click", closePresentMode);
+  $("present-overlay").addEventListener("click", (event) => { if (event.target.id === "present-overlay") closePresentMode(); });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    closeQrZoom();
+    closePresentMode();
+  });
 
   function renderActivityPicker() {
     const wrap = $("activity-picker");
@@ -773,7 +830,7 @@
 
   function buildSummary(responses, statusLabel) {
     if (!db) return "ตั้งค่าการเชื่อมต่อ Supabase ก่อนเริ่มใช้งาน";
-    if (!state.activityId) return "สร้างกิจกรรมในหน้าตั้งค่าเพื่อเริ่มต้น";
+    if (!activeFormActivityId()) return "สร้างกิจกรรมในหน้าตั้งค่าเพื่อเริ่มต้น";
     if (!state.questions.length) return "เปิดหน้าตั้งค่า แล้วเพิ่มคำถามเพื่อเริ่มรับคำตอบ";
 
     const hasScaleQuestion = state.questions.some((q) => q.question_type === "scale");
@@ -953,6 +1010,90 @@
     const empty = !participantMode && state.loaded && !state.activities.length;
     $("dashboard-empty").classList.toggle("hidden", !empty);
     $("dashboard-content").classList.toggle("hidden", empty);
+  }
+
+  function renderHomeActivities() {
+    if (participantMode) return;
+    const empty = state.loaded && !state.activities.length;
+    $("home-empty").classList.toggle("hidden", !empty);
+
+    const holder = $("home-activity-list");
+    holder.replaceChildren();
+    if (empty) return;
+
+    state.activities.forEach((activity) => {
+      const card = el("article", "home-card pastel-card p-6");
+      card.appendChild(el("p", "label-sm", new Date(activity.created_at).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" })));
+      card.appendChild(el("h3", "display-font text-xl font-bold mt-1 break-words", activity.name));
+
+      const actions = el("div", "mt-5 flex flex-wrap gap-2");
+
+      const viewButton = el("button", "btn-soft rounded-full px-4 py-2 text-sm font-bold", "ดูสรุปผล");
+      viewButton.type = "button";
+      viewButton.addEventListener("click", () => {
+        if (state.activityId !== activity.id) {
+          state.activityId = activity.id;
+          state.selected = {}; state.selectedStatus = ""; state.statusFilter = "all";
+          loadAll();
+        }
+        showView("dashboard");
+      });
+
+      const presentButton = el("button", "btn-primary rounded-full px-4 py-2 text-sm font-bold", "ฉายโปรเจกเตอร์");
+      presentButton.type = "button";
+      presentButton.addEventListener("click", () => openPresentMode(activity.id));
+
+      actions.append(viewButton, presentButton);
+      card.appendChild(actions);
+      holder.appendChild(card);
+    });
+  }
+
+  // ---------- present mode: full-screen live display for projectors ----------
+  function openPresentMode(activityId) {
+    state.presentActivityId = activityId;
+    if (state.activityId !== activityId) {
+      state.activityId = activityId;
+      state.selected = {}; state.selectedStatus = ""; state.statusFilter = "all";
+      loadAll();
+    } else {
+      renderPresentMode();
+    }
+  }
+
+  function closePresentMode() {
+    state.presentActivityId = null;
+    $("present-overlay").classList.remove("show");
+    document.body.style.overflow = "";
+  }
+
+  function renderPresentMode() {
+    if (!state.presentActivityId) return;
+    if (state.presentActivityId !== state.activityId) return; // ยังโหลดข้อมูลกิจกรรมเป้าหมายไม่เสร็จ
+
+    $("present-overlay").classList.add("show");
+    document.body.style.overflow = "hidden";
+    $("present-activity-name").textContent = activityName(state.activityId) || "กิจกรรม";
+
+    if (state.presentQrRenderedFor !== state.activityId) {
+      const frame = $("present-qrcode");
+      frame.replaceChildren();
+      if (typeof QRCode !== "undefined") {
+        new QRCode(frame, { text: participantUrl(state.activityId), width: 320, height: 320, colorDark: "#241a30", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+      }
+      state.presentQrRenderedFor = state.activityId;
+    }
+
+    const maximum = maxRating();
+    const scaleQuestionIds = new Set(state.questions.filter((q) => q.question_type === "scale").map((q) => q.id));
+    const ratings = state.responses.flatMap((r) =>
+      Object.entries(r.answers || {})
+        .filter(([key]) => scaleQuestionIds.has(key))
+        .map(([, value]) => Number(value))
+        .filter((v) => Number.isFinite(v) && v > 0)
+    );
+    $("present-count").textContent = state.responses.length.toLocaleString("th-TH");
+    $("present-percent").textContent = maximum && ratings.length ? `${toPercent(avg(ratings), maximum)}%` : "—";
   }
 
   // ---------- render: admin lists ----------
@@ -1211,6 +1352,8 @@
   function renderAll() {
     renderActivityPicker();
     renderDashboardEmpty();
+    renderHomeActivities();
+    renderPresentMode();
     renderFormAvailability();
     renderQrCode();
     renderStatusPicker();
@@ -1541,25 +1684,20 @@
     state.selected = {};
     state.selectedStatus = "";
     message.textContent = "";
-    $("response-form").classList.add("hidden");
-    $("thank-you").classList.remove("hidden");
+    showToast("ขอบคุณสำหรับความคิดเห็น บันทึกคำตอบแล้ว");
+    await loadAll(); // ให้เห็นคำตอบของตัวเองรวมอยู่ในสรุปทันที ไม่ต้องรอ realtime
+    showView("dashboard");
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  $("answer-again").addEventListener("click", () => {
-    $("thank-you").classList.add("hidden");
-    $("response-form").classList.remove("hidden");
-    renderStatusPicker();
-    renderResponseQuestions();
-  });
-
   $("copy-link-button").addEventListener("click", async () => {
-    if (!state.activityId) return showToast("กรุณาเลือกกิจกรรมก่อน");
+    const targetId = activeFormActivityId();
+    if (!targetId) return showToast("กรุณาเลือกกิจกรรมก่อน");
     try {
-      await navigator.clipboard.writeText(participantUrl(state.activityId));
+      await navigator.clipboard.writeText(participantUrl(targetId));
       showToast("คัดลอกลิงก์แบบประเมินแล้ว");
     } catch {
-      prompt("คัดลอกลิงก์นี้", participantUrl(state.activityId));
+      prompt("คัดลอกลิงก์นี้", participantUrl(targetId));
     }
   });
 
@@ -1571,6 +1709,7 @@
     applyActivityName();
     renderAll();
     if (participantMode) showView("form");
+    else showView("home");
 
     if (!db) {
       $("config-warning").textContent = dbInitError;
