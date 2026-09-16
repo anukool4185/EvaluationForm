@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="version" content="2.7.0">
+  <meta name="version" content="2.8.0">
   <title>ระบบประเมินกิจกรรม</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
@@ -84,7 +84,7 @@
     .home-card-poster { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
     .home-card-body { padding: 1.25rem 1.5rem 1.5rem; }
 
-    #present-poster { max-width: min(70vw, 560px); max-height: 34vh; object-fit: contain; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+    #present-poster { max-width: 92vw; max-height: 84vh; object-fit: contain; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
 
     #present-overlay { position: fixed; inset: 0; z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 40px; padding: 40px 24px; background: linear-gradient(160deg, #241a30, #3a2740); color: #fff; text-align: center; }
     #present-overlay.show { display: flex; }
@@ -92,8 +92,10 @@
     #present-activity-name { font-size: clamp(1.8rem, 5vw, 3.2rem); }
     .present-stat-value { font-size: clamp(2.6rem, 8vw, 5.5rem); line-height: 1; }
     .present-stat-label { font-size: clamp(.9rem, 1.6vw, 1.15rem); color: rgba(255,255,255,.65); }
-    #present-close { color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; width: 48px; height: 48px; display: grid; place-items: center; position: absolute; top: 24px; right: 24px; }
-    #present-close:hover { background: rgba(255,255,255,.22); }
+    .present-icon-btn { color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; width: 48px; height: 48px; display: grid; place-items: center; position: absolute; top: 24px; z-index: 1; }
+    .present-icon-btn:hover { background: rgba(255,255,255,.22); }
+    #present-fullscreen { left: 24px; }
+    #present-close { right: 24px; }
 
     button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid rgba(217,162,190,.65); outline-offset: 3px; }
     @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -407,7 +409,7 @@
   </nav>
 
   <footer class="max-w-7xl mx-auto px-5 pb-8 md:px-8 text-center text-xs text-[#9a90a6]">
-    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.7.0</span>
+    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.8.0</span>
     <span id="db-status" class="ml-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 font-semibold">กำลังตรวจการเชื่อมต่อ...</span>
   </footer>
 
@@ -423,18 +425,21 @@
   </div>
 
   <div id="present-overlay" role="dialog" aria-modal="true" aria-label="โหมดฉายจอโปรเจกเตอร์">
-    <button id="present-close" type="button" aria-label="ปิดโหมดฉายจอ"><i data-lucide="x" class="w-6 h-6"></i></button>
+    <button id="present-fullscreen" type="button" class="present-icon-btn" aria-label="ขยายเต็มหน้าจอ"><i data-lucide="maximize" class="w-5 h-5"></i></button>
+    <button id="present-close" type="button" class="present-icon-btn" aria-label="ปิดโหมดฉายจอ"><i data-lucide="x" class="w-6 h-6"></i></button>
     <img id="present-poster" class="hidden" alt="">
-    <p id="present-activity-name" class="display-font font-bold"></p>
-    <div class="flex flex-wrap items-center justify-center gap-x-16 gap-y-10">
-      <div id="present-qrcode" class="qr-frame"></div>
-      <div class="flex flex-col items-center">
-        <p id="present-count" class="display-font font-bold present-stat-value">0</p>
-        <p class="present-stat-label">ผู้ตอบทั้งหมด</p>
-      </div>
-      <div class="flex flex-col items-center">
-        <p id="present-percent" class="display-font font-bold present-stat-value">—</p>
-        <p class="present-stat-label">คะแนนเฉลี่ย</p>
+    <div id="present-stats-block">
+      <p id="present-activity-name" class="display-font font-bold"></p>
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-x-16 gap-y-10">
+        <div id="present-qrcode" class="qr-frame"></div>
+        <div class="flex flex-col items-center">
+          <p id="present-count" class="display-font font-bold present-stat-value">0</p>
+          <p class="present-stat-label">ผู้ตอบทั้งหมด</p>
+        </div>
+        <div class="flex flex-col items-center">
+          <p id="present-percent" class="display-font font-bold present-stat-value">—</p>
+          <p class="present-stat-label">คะแนนเฉลี่ย</p>
+        </div>
       </div>
     </div>
   </div>
@@ -442,7 +447,7 @@
 
 <script>
   // ============ เวอร์ชัน (แก้ทุกครั้งที่อัปเดต และบันทึกใน CHANGELOG.md) ============
-  const APP_VERSION = "2.7.0";
+  const APP_VERSION = "2.8.0";
   const APP_UPDATED = "2026-09-16";
 
   // ============ ตั้งค่า Supabase (Project Settings → API) ============
@@ -1124,10 +1129,45 @@
     }
   }
 
+  function isPresentFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+
+  function updateFullscreenIcon() {
+    const btn = $("present-fullscreen");
+    const active = isPresentFullscreen();
+    btn.replaceChildren();
+    const icon = document.createElement("i");
+    icon.setAttribute("data-lucide", active ? "minimize" : "maximize");
+    icon.className = "w-5 h-5";
+    btn.appendChild(icon);
+    btn.setAttribute("aria-label", active ? "ออกจากเต็มหน้าจอ" : "ขยายเต็มหน้าจอ");
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function togglePresentFullscreen() {
+    const el = $("present-overlay");
+    if (!isPresentFullscreen()) {
+      const request = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (request) request.call(el);
+    } else {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) exit.call(document);
+    }
+  }
+
+  document.addEventListener("fullscreenchange", updateFullscreenIcon);
+  document.addEventListener("webkitfullscreenchange", updateFullscreenIcon);
+  $("present-fullscreen").addEventListener("click", togglePresentFullscreen);
+
   function closePresentMode() {
     state.presentActivityId = null;
     $("present-overlay").classList.remove("show");
     document.body.style.overflow = "";
+    if (isPresentFullscreen()) {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) exit.call(document);
+    }
   }
 
   function renderPresentMode() {
@@ -1137,16 +1177,22 @@
     $("present-overlay").classList.add("show");
     document.body.style.overflow = "hidden";
     const activity = state.activities.find((a) => a.id === state.activityId);
-    $("present-activity-name").textContent = (activity && activity.name) || "กิจกรรม";
+    const hasPoster = !!(activity && activity.poster_image);
 
     const posterImg = $("present-poster");
-    if (activity && activity.poster_image) {
+    if (hasPoster) {
       if (posterImg.src !== activity.poster_image) posterImg.src = activity.poster_image;
       posterImg.classList.remove("hidden");
     } else {
       posterImg.classList.add("hidden");
       posterImg.removeAttribute("src");
     }
+
+    // มีรูปกิจกรรม: แสดงเฉพาะรูปเต็มจอ ไม่มีรูป: กลับไปแสดงชื่อ + QR + ตัวเลขสรุปแทน
+    $("present-stats-block").classList.toggle("hidden", hasPoster);
+    if (hasPoster) return;
+
+    $("present-activity-name").textContent = (activity && activity.name) || "กิจกรรม";
 
     if (state.presentQrRenderedFor !== state.activityId) {
       const frame = $("present-qrcode");
