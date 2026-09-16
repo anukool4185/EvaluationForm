@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="version" content="2.11.0">
+  <meta name="version" content="2.12.0">
   <title>ระบบประเมินกิจกรรม</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
@@ -43,7 +43,7 @@
     .nav-tab { color: var(--muted); border-bottom: 3px solid transparent; transition: color .2s, border-color .2s; }
     .nav-tab:hover, .nav-tab.active { color: var(--ink); border-color: var(--rose); }
 
-    .mobile-nav-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: .35rem .9rem; border-radius: 16px; color: var(--muted); font-size: .68rem; font-weight: 700; transition: color .2s, background .2s; }
+    .mobile-nav-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: .35rem .55rem; border-radius: 16px; color: var(--muted); font-size: .64rem; font-weight: 700; white-space: nowrap; transition: color .2s, background .2s; }
     .mobile-nav-tab.active { color: var(--ink); background: #ffdce8; }
     #mobile-nav { padding-bottom: calc(.5rem + env(safe-area-inset-bottom)); }
     body.participant-mode #mobile-nav { display: none; }
@@ -99,7 +99,7 @@
       #qr-zoom-overlay .qr-frame { width: min(78vw, 52vh, 520px); }
       .qrz-right { width: min(100%, 520px); }
     }
-    #qr-zoom-close { color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; width: 44px; height: 44px; display: grid; place-items: center; position: fixed; top: 20px; right: 20px; z-index: 2; }
+    #qr-zoom-close, #exam-zoom-close { color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; width: 44px; height: 44px; display: grid; place-items: center; position: fixed; top: 20px; right: 20px; z-index: 2; }
     #qr-zoom-close:hover { background: rgba(255,255,255,.22); }
 
     .pie-chart { width: 200px; height: 200px; flex: 0 0 auto; border-radius: 999px; background: #ece7f0;
@@ -139,6 +139,63 @@
     #present-fullscreen { left: 24px; }
     #present-close { right: 24px; }
 
+    /* ---------- แบบทดสอบ: หน้าแสดง QR ---------- */
+    .exam-panel-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(20px, 4vw, 48px); align-items: center; }
+    .exam-qr { width: min(100%, 300px); cursor: zoom-in; }
+    .exam-stats { display: grid; gap: 14px; width: 100%; }
+    .exam-stat { background: rgba(255,255,255,.75); border: 1px solid var(--line); border-radius: 20px; padding: 16px 20px; }
+    .exam-stat-head { display: flex; align-items: center; gap: 8px; font-size: .85rem; font-weight: 700; color: var(--muted); }
+    .exam-stat-number { font-family: "Fraunces", "Noto Sans Thai", serif; font-weight: 700; font-size: clamp(2.2rem, 5vw, 3.2rem); line-height: 1.1; font-variant-numeric: tabular-nums; display: inline-block; }
+    .exam-stat-unit { font-size: 1rem; color: var(--muted); margin-left: 4px; }
+    .exam-badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: .3rem .8rem; font-size: .78rem; font-weight: 700; }
+    .exam-badge.open { background: #d9f4e5; color: #2f7a57; }
+    .exam-badge.closed { background: #ffe1e8; color: #b84e6b; }
+    .num-bump { animation: num-bump .45s ease; }
+    @keyframes num-bump { 0% { transform: scale(1); } 40% { transform: scale(1.16); } 100% { transform: scale(1); } }
+    @media (max-width: 760px) { .exam-panel-grid { grid-template-columns: 1fr; justify-items: center; } }
+
+    #exam-zoom-overlay { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: clamp(16px, 3vw, 40px); overflow-y: auto; color: #fff;
+      background: radial-gradient(circle at 18% 20%, rgba(243,169,195,.18), transparent 40%), radial-gradient(circle at 85% 85%, rgba(143,211,221,.16), transparent 42%), #221a2b; }
+    #exam-zoom-overlay.show { display: flex; }
+    #exam-zoom-overlay .qr-frame { width: min(64vh, 44vw, 620px); cursor: default; border-width: 14px; }
+    @media (max-width: 860px) { #exam-zoom-overlay { align-items: flex-start; } #exam-zoom-overlay .qr-frame { width: min(78vw, 52vh, 520px); } }
+
+    /* ---------- แบบทดสอบ: ฝั่งผู้ดูแล ---------- */
+    .exam-phase-tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,.7); border: 1px solid var(--line); }
+    .exam-phase-tabs button { padding: .45rem 1rem; border-radius: 999px; font-weight: 700; font-size: .9rem; color: var(--muted); }
+    .exam-phase-tabs button.active { background: #ffdce8; color: var(--ink); }
+    .exam-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    .exam-table th { text-align: left; font-size: .75rem; color: var(--muted); font-weight: 700; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .exam-table td { padding: 8px 10px; border-bottom: 1px solid #f1eaf3; vertical-align: middle; }
+    .exam-choice-key { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; border: 1.5px solid #b7aec2; font-size: .72rem; font-weight: 700; margin-right: 6px; flex: 0 0 auto; }
+    .exam-choice-key.correct { background: #438b69; border-color: #438b69; color: #fff; }
+
+    /* ---------- แบบทดสอบ: กระดาษคำตอบบนมือถือ ---------- */
+    .exam-take-wrap { max-width: 720px; margin: 0 auto; }
+    .answer-sheet { background: #fffdf7; border: 1px solid #e8dfcd; border-radius: 18px; box-shadow: 0 18px 40px rgba(93,72,111,.12); overflow: hidden; }
+    .answer-sheet-head { padding: 20px 20px 16px; background: #fff8ea; border-bottom: 2px dashed #e3d6bd; }
+    .answer-sheet-title { font-family: "Fraunces", "Noto Sans Thai", serif; font-weight: 700; font-size: clamp(1.2rem, 5vw, 1.5rem); text-align: center; line-height: 1.35; }
+    .sheet-line { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; row-gap: 2px; margin-top: 10px; padding-bottom: 5px; border-bottom: 1px dotted #d8ccb4; font-size: .95rem; }
+    .sheet-label { color: var(--muted); font-weight: 600; }
+    .sheet-value { font-weight: 700; margin-right: 10px; }
+    .answer-sheet-body { list-style: none; margin: 0; padding: 6px 12px 18px; }
+    .sheet-q { padding: 14px 6px; border-bottom: 1px solid #f0e8d8; transition: background .3s; border-radius: 12px; }
+    .sheet-q:last-child { border-bottom: 0; }
+    .sheet-q.flash { background: rgba(243,169,195,.22); }
+    .sheet-q-text { display: flex; gap: 10px; font-weight: 600; line-height: 1.55; }
+    .sheet-q-no { flex: 0 0 auto; min-width: 30px; height: 30px; padding: 0 6px; border-radius: 9px; background: #4a4258; color: #fff; display: grid; place-items: center; font-size: .85rem; font-weight: 700; }
+    .sheet-choices { display: grid; gap: 4px; margin-top: 8px; padding-left: 40px; }
+    .sheet-choice { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 46px; padding: 5px 8px; border: 0; border-radius: 12px; background: transparent; color: var(--ink); text-align: left; -webkit-tap-highlight-color: transparent; }
+    .sheet-choice:active { background: rgba(243,169,195,.16); }
+    .bubble { width: 36px; height: 36px; flex: 0 0 auto; border-radius: 999px; border: 2px solid #8a7f96; background: #fff; color: #8a7f96; display: grid; place-items: center; font-weight: 700; font-size: .95rem; transition: transform .15s ease, background .15s ease, color .15s ease, border-color .15s ease; }
+    .sheet-choice[aria-checked="true"] .bubble { background: radial-gradient(circle at 35% 30%, #5d5369, #1f1827 70%); border-color: #1f1827; color: #fff; transform: scale(1.06); }
+    .sheet-choice[aria-checked="true"] .choice-text { font-weight: 700; }
+    .sheet-submit-bar { position: sticky; bottom: 0; z-index: 5; margin-top: 16px; padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); background: rgba(255,255,255,.96); border: 1px solid var(--line); border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(93,72,111,.12); backdrop-filter: blur(6px); }
+    .result-score { font-family: "Fraunces", "Noto Sans Thai", serif; font-weight: 700; line-height: 1; font-size: clamp(3.4rem, 16vw, 5.5rem); font-variant-numeric: tabular-nums; }
+    .result-grid { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; text-align: left; }
+    .result-grid dt { color: var(--muted); font-weight: 600; }
+    .result-grid dd { margin: 0; font-weight: 700; }
+
     button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid rgba(217,162,190,.65); outline-offset: 3px; }
     @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
@@ -159,6 +216,8 @@
       <div class="flex items-center gap-6">
         <nav aria-label="เมนูหลัก" class="hidden md:flex gap-6 text-sm font-bold">
           <button type="button" class="nav-tab active pb-2" data-view="home" aria-pressed="true">หน้าแรก</button>
+          <button type="button" class="nav-tab pb-2" data-view="exam-pre" aria-pressed="false">สอบก่อนอบรม</button>
+          <button type="button" class="nav-tab pb-2" data-view="exam-post" aria-pressed="false">สอบหลังอบรม</button>
           <button type="button" class="nav-tab pb-2" data-view="dashboard" aria-pressed="false">สรุปผล</button>
           <button type="button" class="nav-tab pb-2" data-view="form" aria-pressed="false">ทำแบบประเมิน</button>
         </nav>
@@ -187,6 +246,204 @@
         <p class="mt-2 text-[#7f758c]">กดไอคอนเฟืองมุมขวาบน (กด 5 ครั้ง) เพื่อเข้าหน้าตั้งค่าและสร้างกิจกรรมแรกของคุณ</p>
       </div>
       <div id="home-activity-list" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"></div>
+    </section>
+
+    <!-- ================= EXAM PRE ================= -->
+    <section id="exam-pre-view" class="view-panel" aria-label="สอบก่อนอบรม">
+      <div class="mb-6">
+        <p class="label-sm">แบบทดสอบ</p>
+        <h2 class="display-font text-2xl md:text-3xl font-bold mt-1">สอบก่อนอบรม</h2>
+        <p id="exam-pre-subtitle" class="mt-2 text-sm text-[#7f758c]"></p>
+      </div>
+      <div id="exam-pre-empty" class="hidden pastel-card p-8 text-center">
+        <i data-lucide="calendar-plus" class="w-10 h-10 mx-auto text-[#d98aa8]"></i>
+        <h3 class="display-font text-2xl font-bold mt-3">ยังไม่มีกิจกรรม</h3>
+        <p class="mt-2 text-[#7f758c]">สร้างกิจกรรมและข้อสอบในหน้าตั้งค่าก่อน</p>
+      </div>
+      <div id="exam-pre-content" class="pastel-card p-6 sm:p-8">
+        <div class="exam-panel-grid">
+          <div class="flex flex-col items-center gap-3">
+            <button id="exam-pre-qr" type="button" class="qr-frame exam-qr" aria-label="QR Code สอบก่อนอบรม กดเพื่อขยายเต็มจอ"></button>
+            <span id="exam-pre-badge" class="exam-badge open"></span>
+            <p class="text-xs font-semibold text-[#9a90a6] text-center">ให้ผู้เข้าอบรมสแกนก่อนเริ่มการอบรม</p>
+          </div>
+          <div class="exam-stats" aria-live="polite">
+            <div class="exam-stat">
+              <div class="exam-stat-head"><i data-lucide="log-in" class="w-4 h-4"></i>กดเข้าสอบแล้ว</div>
+              <p><span id="exam-pre-started" class="exam-stat-number">0</span><span class="exam-stat-unit">คน</span></p>
+            </div>
+            <div class="exam-stat">
+              <div class="exam-stat-head"><i data-lucide="send" class="w-4 h-4"></i>ส่งกระดาษคำตอบแล้ว</div>
+              <p><span id="exam-pre-submitted" class="exam-stat-number">0</span><span class="exam-stat-unit">คน</span></p>
+              <div class="progress-track mt-3"><div id="exam-pre-progress" class="progress-fill" style="width:0%"></div></div>
+            </div>
+            <div class="exam-stat">
+              <div class="exam-stat-head"><i data-lucide="award" class="w-4 h-4"></i>คะแนนเฉลี่ยของผู้ที่ส่งแล้ว</div>
+              <p id="exam-pre-avg" class="exam-stat-number">—</p>
+              <p id="exam-pre-qcount" class="mt-1 text-xs text-[#7f758c]"></p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button id="exam-pre-copy" type="button" class="btn-primary rounded-full px-5 py-3 text-sm font-bold">
+                <span class="inline-flex items-center gap-2"><i data-lucide="copy" class="w-4 h-4"></i>คัดลอกลิงก์ข้อสอบ</span>
+              </button>
+              <button id="exam-pre-zoom" type="button" class="btn-soft rounded-full px-5 py-3 text-sm font-bold">
+                <span class="inline-flex items-center gap-2"><i data-lucide="maximize" class="w-4 h-4"></i>ขยาย QR เต็มจอ</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= EXAM POST ================= -->
+    <section id="exam-post-view" class="view-panel" aria-label="สอบหลังอบรม">
+      <div class="mb-6">
+        <p class="label-sm">แบบทดสอบ</p>
+        <h2 class="display-font text-2xl md:text-3xl font-bold mt-1">สอบหลังอบรม</h2>
+        <p id="exam-post-subtitle" class="mt-2 text-sm text-[#7f758c]"></p>
+      </div>
+      <div id="exam-post-empty" class="hidden pastel-card p-8 text-center">
+        <i data-lucide="calendar-plus" class="w-10 h-10 mx-auto text-[#d98aa8]"></i>
+        <h3 class="display-font text-2xl font-bold mt-3">ยังไม่มีกิจกรรม</h3>
+        <p class="mt-2 text-[#7f758c]">สร้างกิจกรรมและข้อสอบในหน้าตั้งค่าก่อน</p>
+      </div>
+      <div id="exam-post-content" class="pastel-card p-6 sm:p-8">
+        <div class="exam-panel-grid">
+          <div class="flex flex-col items-center gap-3">
+            <button id="exam-post-qr" type="button" class="qr-frame exam-qr" aria-label="QR Code สอบหลังอบรม กดเพื่อขยายเต็มจอ"></button>
+            <span id="exam-post-badge" class="exam-badge open"></span>
+            <p class="text-xs font-semibold text-[#9a90a6] text-center">ให้ผู้เข้าอบรมสแกนหลังจบการอบรม</p>
+          </div>
+          <div class="exam-stats" aria-live="polite">
+            <div class="exam-stat">
+              <div class="exam-stat-head"><i data-lucide="log-in" class="w-4 h-4"></i>กดเข้าสอบแล้ว</div>
+              <p><span id="exam-post-started" class="exam-stat-number">0</span><span class="exam-stat-unit">คน</span></p>
+            </div>
+            <div class="exam-stat">
+              <div class="exam-stat-head"><i data-lucide="send" class="w-4 h-4"></i>ส่งกระดาษคำตอบแล้ว</div>
+              <p><span id="exam-post-submitted" class="exam-stat-number">0</span><span class="exam-stat-unit">คน</span></p>
+              <div class="progress-track mt-3"><div id="exam-post-progress" class="progress-fill" style="width:0%"></div></div>
+            </div>
+            <div class="exam-stat">
+              <div class="exam-stat-head"><i data-lucide="award" class="w-4 h-4"></i>คะแนนเฉลี่ยของผู้ที่ส่งแล้ว</div>
+              <p id="exam-post-avg" class="exam-stat-number">—</p>
+              <p id="exam-post-qcount" class="mt-1 text-xs text-[#7f758c]"></p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button id="exam-post-copy" type="button" class="btn-primary rounded-full px-5 py-3 text-sm font-bold">
+                <span class="inline-flex items-center gap-2"><i data-lucide="copy" class="w-4 h-4"></i>คัดลอกลิงก์ข้อสอบ</span>
+              </button>
+              <button id="exam-post-zoom" type="button" class="btn-soft rounded-full px-5 py-3 text-sm font-bold">
+                <span class="inline-flex items-center gap-2"><i data-lucide="maximize" class="w-4 h-4"></i>ขยาย QR เต็มจอ</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= EXAM TAKE (มือถือผู้สอบ เปิดจาก QR เท่านั้น) ================= -->
+    <section id="exam-take-view" class="view-panel" aria-label="ทำแบบทดสอบ">
+      <div class="exam-take-wrap">
+        <div id="exam-take-loading" class="pastel-card p-8 text-center text-[#7f758c]">กำลังโหลดแบบทดสอบ...</div>
+
+        <div id="exam-take-error" class="hidden pastel-card p-8 text-center">
+          <i data-lucide="alert-circle" class="w-10 h-10 mx-auto text-[#d98aa8]"></i>
+          <h3 id="exam-take-error-title" class="display-font text-2xl font-bold mt-3"></h3>
+          <p id="exam-take-error-text" class="mt-2 text-[#7f758c]"></p>
+          <button id="exam-take-retry" type="button" class="btn-soft mt-6 rounded-full px-5 py-3 font-bold">ลองอีกครั้ง</button>
+        </div>
+
+        <form id="exam-register-form" class="hidden pastel-card p-6 space-y-4" novalidate>
+          <div>
+            <p id="exam-register-activity" class="label-sm"></p>
+            <h2 id="exam-register-title" class="display-font text-2xl font-bold mt-1"></h2>
+            <p id="exam-register-meta" class="mt-1 text-sm text-[#7f758c]"></p>
+          </div>
+          <div>
+            <label class="block text-sm font-bold mb-1" for="exam-code">รหัสนักเรียน</label>
+            <input id="exam-code" type="text" inputmode="numeric" autocomplete="off" maxlength="30" class="w-full rounded-2xl border border-[#dfd3e5] bg-white px-4 py-3 outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-bold mb-1" for="exam-prefix">คำนำหน้า</label>
+            <select id="exam-prefix" class="w-full rounded-2xl border border-[#dfd3e5] bg-white px-4 py-3 outline-none"></select>
+          </div>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label class="block text-sm font-bold mb-1" for="exam-first">ชื่อ</label>
+              <input id="exam-first" type="text" autocomplete="given-name" maxlength="100" class="w-full rounded-2xl border border-[#dfd3e5] bg-white px-4 py-3 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1" for="exam-last">นามสกุล</label>
+              <input id="exam-last" type="text" autocomplete="family-name" maxlength="100" class="w-full rounded-2xl border border-[#dfd3e5] bg-white px-4 py-3 outline-none">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold mb-1" for="exam-grade">ชั้น</label>
+              <select id="exam-grade" class="w-full rounded-2xl border border-[#dfd3e5] bg-white px-4 py-3 outline-none"></select>
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-1" for="exam-room">ห้อง</label>
+              <select id="exam-room" class="w-full rounded-2xl border border-[#dfd3e5] bg-white px-4 py-3 outline-none"></select>
+            </div>
+          </div>
+          <div id="exam-location-wrap">
+            <label class="block text-sm font-bold mb-1" for="exam-location">สถานที่สอบ</label>
+            <select id="exam-location" class="w-full rounded-2xl border border-[#dfd3e5] bg-white px-4 py-3 outline-none"></select>
+          </div>
+          <p id="exam-register-message" class="min-h-5 text-sm font-semibold" aria-live="polite"></p>
+          <button id="exam-register-submit" type="submit" class="btn-primary w-full rounded-full px-5 py-4 font-bold disabled:opacity-60">เข้าสู่กระดาษคำตอบ</button>
+        </form>
+
+        <div id="exam-sheet" class="hidden">
+          <article class="answer-sheet">
+            <header class="answer-sheet-head">
+              <h2 id="sheet-title" class="answer-sheet-title"></h2>
+              <p class="sheet-line"><span class="sheet-label">สถานที่สอบ</span><span id="sheet-location" class="sheet-value"></span></p>
+              <p class="sheet-line"><span class="sheet-label">รหัสนักเรียน</span><span id="sheet-code" class="sheet-value"></span></p>
+              <p class="sheet-line">
+                <span id="sheet-name" class="sheet-value"></span>
+                <span class="sheet-label">ชั้น</span><span id="sheet-grade" class="sheet-value"></span>
+                <span class="sheet-label">ห้อง</span><span id="sheet-room" class="sheet-value"></span>
+              </p>
+            </header>
+            <ol id="sheet-questions" class="answer-sheet-body"></ol>
+          </article>
+
+          <div class="sheet-submit-bar">
+            <div id="sheet-confirm" class="hidden mb-3 rounded-2xl bg-[#fff4f7] p-3">
+              <p id="sheet-confirm-text" class="text-sm font-semibold text-[#8a3d55]"></p>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <button id="sheet-confirm-back" type="button" class="btn-soft rounded-full px-4 py-2 text-sm font-bold">กลับไปตรวจคำตอบ</button>
+                <button id="sheet-confirm-yes" type="button" class="rounded-full bg-[#4a4258] px-4 py-2 text-sm font-bold text-white disabled:opacity-60">ยืนยันส่งกระดาษคำตอบ</button>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="min-w-0 flex-1">
+                <p id="sheet-progress-text" class="text-sm font-bold"></p>
+                <div class="progress-track mt-1"><div id="sheet-progress" class="progress-fill" style="width:0%"></div></div>
+              </div>
+              <button id="sheet-submit" type="button" class="btn-primary shrink-0 rounded-full px-5 py-3 font-bold">ส่งกระดาษคำตอบ</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="exam-result" class="hidden pastel-card p-6 sm:p-8 text-center">
+          <p id="result-title" class="label-sm"></p>
+          <p class="mt-4 text-sm font-semibold text-[#7f758c]">คะแนนของคุณ</p>
+          <p class="mt-1"><span id="result-score" class="result-score"></span><span class="text-2xl font-bold text-[#7f758c]"> / <span id="result-total"></span></span></p>
+          <p id="result-percent" class="mt-2 text-lg font-bold"></p>
+          <dl class="result-grid mt-6 rounded-2xl bg-white/70 p-4">
+            <dt>รหัสนักเรียน</dt><dd id="result-code"></dd>
+            <dt>ชื่อ-นามสกุล</dt><dd id="result-name"></dd>
+            <dt>ชั้น / ห้อง</dt><dd id="result-class"></dd>
+            <dt>สถานที่สอบ</dt><dd id="result-location"></dd>
+            <dt>ส่งเมื่อ</dt><dd id="result-time"></dd>
+          </dl>
+          <button id="result-new" type="button" class="btn-soft mt-6 rounded-full px-5 py-3 font-bold">เริ่มทำแบบทดสอบใหม่ (ผู้สอบคนถัดไป)</button>
+        </div>
+      </div>
     </section>
 
     <!-- ================= DASHBOARD ================= -->
@@ -417,6 +674,92 @@
             <div id="admin-response-list" class="mt-5 space-y-2"></div>
             <button id="admin-response-more" type="button" class="hidden btn-soft mt-4 rounded-full px-4 py-2 text-sm font-bold">แสดงเพิ่ม</button>
           </section>
+
+          <section id="admin-exam-card" class="pastel-card p-6 lg:col-span-2">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 class="display-font text-xl font-bold">แบบทดสอบก่อน/หลังอบรม</h3>
+                <p class="mt-1 text-sm text-[#7f758c]">เฉลยเก็บในระบบเท่านั้น ผู้สอบไม่เห็นเฉลย ระบบตรวจคะแนนให้ทันทีเมื่อส่ง</p>
+              </div>
+              <div class="exam-phase-tabs" role="tablist" aria-label="เลือกแบบทดสอบ">
+                <button type="button" data-exam-phase="pre" class="active" role="tab" aria-selected="true">ก่อนอบรม</button>
+                <button type="button" data-exam-phase="post" role="tab" aria-selected="false">หลังอบรม</button>
+              </div>
+            </div>
+            <p id="exam-admin-status" class="mt-3 text-sm text-[#7f758c]"></p>
+
+            <div class="mt-5 grid gap-6 lg:grid-cols-2">
+              <form id="exam-settings-form" class="space-y-3 rounded-2xl bg-white/55 p-4">
+                <h4 class="font-bold">ตั้งค่าแบบทดสอบ<span class="exam-phase-name"></span></h4>
+                <div>
+                  <label class="block text-sm font-bold mb-1" for="exam-title-input">ชื่อแบบทดสอบ (แสดงบนหัวกระดาษคำตอบ)</label>
+                  <input id="exam-title-input" type="text" maxlength="200" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
+                </div>
+                <div>
+                  <label class="block text-sm font-bold mb-1" for="exam-mode-input">รูปแบบการออกข้อสอบ</label>
+                  <select id="exam-mode-input" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
+                    <option value="ordered">เรียงข้อตามลำดับที่สร้าง ครบทุกข้อ</option>
+                    <option value="random">สุ่มข้อสอบ (กำหนดจำนวนข้อได้)</option>
+                  </select>
+                </div>
+                <div id="exam-count-wrap" class="hidden">
+                  <label class="block text-sm font-bold mb-1" for="exam-count-input">จำนวนข้อที่สุ่มให้แต่ละคน</label>
+                  <input id="exam-count-input" type="number" min="1" max="500" placeholder="เว้นว่าง = ครบทุกข้อแต่สลับลำดับ" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
+                </div>
+                <label class="flex items-center gap-2 text-sm font-bold">
+                  <input id="exam-open-input" type="checkbox" class="h-4 w-4 accent-[#d9749a]"> เปิดรับการสอบ
+                </label>
+                <button type="submit" class="btn-primary rounded-full px-5 py-2.5 font-bold disabled:opacity-60">บันทึกการตั้งค่า</button>
+              </form>
+
+              <div class="space-y-3 rounded-2xl bg-white/55 p-4">
+                <h4 class="font-bold">สถานที่สอบ <span class="text-xs font-semibold text-[#7f758c]">(ใช้ร่วมกันทั้งก่อนและหลังอบรม)</span></h4>
+                <form id="exam-location-form" class="flex gap-2">
+                  <label class="sr-only" for="exam-location-input">สถานที่สอบใหม่</label>
+                  <input id="exam-location-input" type="text" maxlength="150" placeholder="เช่น หอประชุมใหญ่" class="min-w-0 flex-1 rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-2.5 outline-none">
+                  <button type="submit" class="btn-primary rounded-full px-4 py-2.5 font-bold disabled:opacity-60">เพิ่ม</button>
+                </form>
+                <p class="text-xs text-[#7f758c]">ถ้าไม่เพิ่มสถานที่เลย ผู้สอบจะไม่ต้องเลือกสถานที่</p>
+                <div id="exam-location-list" class="space-y-2"></div>
+              </div>
+            </div>
+
+            <form id="exam-question-form" class="mt-6 space-y-3 rounded-2xl bg-white/55 p-4">
+              <h4 class="font-bold">เพิ่มข้อสอบ<span class="exam-phase-name"></span></h4>
+              <div>
+                <label class="block text-sm font-bold mb-1" for="exam-q-text">โจทย์</label>
+                <textarea id="exam-q-text" rows="2" maxlength="1000" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none"></textarea>
+              </div>
+              <div>
+                <p class="text-sm font-bold mb-1">ตัวเลือก (กรอก 2–5 ตัวเลือกเรียงจาก ก) และเลือกข้อที่ถูกเป็นเฉลย</p>
+                <div id="exam-choice-inputs" class="space-y-2"></div>
+              </div>
+              <button type="submit" class="btn-primary rounded-full px-5 py-2.5 font-bold disabled:opacity-60">เพิ่มข้อสอบ</button>
+            </form>
+
+            <div class="mt-5 flex flex-wrap items-center justify-between gap-2">
+              <p id="exam-question-summary" class="text-sm font-bold"></p>
+              <button id="exam-copy-questions" type="button" class="btn-soft rounded-full px-4 py-2 text-sm font-bold disabled:opacity-50">คัดลอกข้อสอบก่อนอบรมไปใช้หลังอบรม</button>
+            </div>
+            <ol id="exam-question-list" class="mt-3 space-y-2"></ol>
+
+            <div class="mt-8 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h4 class="font-bold">ผลสอบ<span class="exam-phase-name"></span></h4>
+                <p id="exam-result-summary" class="text-sm text-[#7f758c]"></p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button id="exam-refresh-results" type="button" class="btn-soft rounded-full px-4 py-2 text-sm font-bold">รีเฟรช</button>
+                <button id="exam-download-csv" type="button" class="btn-soft rounded-full px-4 py-2 text-sm font-bold disabled:opacity-50">ดาวน์โหลด CSV</button>
+              </div>
+            </div>
+            <div class="mt-3 overflow-x-auto rounded-2xl bg-white/60">
+              <table class="exam-table">
+                <thead><tr><th>#</th><th>ส่งเมื่อ</th><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>ชั้น/ห้อง</th><th>สถานที่สอบ</th><th>คะแนน</th><th></th></tr></thead>
+                <tbody id="exam-result-rows"></tbody>
+              </table>
+            </div>
+          </section>
         </div>
 
         <section class="pastel-card p-6 mt-6 max-w-md">
@@ -440,18 +783,26 @@
       <i data-lucide="home" class="w-5 h-5"></i>
       <span>หน้าแรก</span>
     </button>
+    <button type="button" class="mobile-nav-tab" data-view="exam-pre" aria-pressed="false">
+      <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+      <span>สอบก่อน</span>
+    </button>
+    <button type="button" class="mobile-nav-tab" data-view="exam-post" aria-pressed="false">
+      <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+      <span>สอบหลัง</span>
+    </button>
     <button type="button" class="mobile-nav-tab" data-view="dashboard" aria-pressed="false">
       <i data-lucide="pie-chart" class="w-5 h-5"></i>
       <span>สรุปผล</span>
     </button>
     <button type="button" class="mobile-nav-tab" data-view="form" aria-pressed="false">
       <i data-lucide="clipboard-edit" class="w-5 h-5"></i>
-      <span>ทำแบบประเมิน</span>
+      <span>ประเมิน</span>
     </button>
   </nav>
 
   <footer class="max-w-7xl mx-auto px-5 pb-8 md:px-8 text-center text-xs text-[#9a90a6]">
-    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.11.0</span>
+    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.12.0</span>
     <span id="db-status" class="ml-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 font-semibold">กำลังตรวจการเชื่อมต่อ...</span>
   </footer>
 
@@ -499,6 +850,35 @@
     </div>
   </div>
 
+  <div id="exam-zoom-overlay" role="dialog" aria-modal="true" aria-label="QR แบบทดสอบขยายเต็มจอ">
+    <button id="exam-zoom-close" type="button" aria-label="ปิด"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <div class="qrz-layout">
+      <div class="qrz-left">
+        <p id="exam-zoom-name" class="qrz-title"></p>
+        <div id="exam-zoom-frame" class="qr-frame"></div>
+        <p id="exam-zoom-hint" class="qrz-hint"></p>
+      </div>
+      <div class="qrz-right" aria-live="polite">
+        <section class="qrz-card">
+          <div class="qrz-card-head"><span class="qrz-head-label"><span class="qrz-live-dot" aria-hidden="true"></span>กดเข้าสอบแล้ว</span><i data-lucide="log-in" class="w-5 h-5" aria-hidden="true"></i></div>
+          <div class="qrz-big"><span id="exam-zoom-started" class="qrz-number">0</span><span class="qrz-unit">คน</span></div>
+        </section>
+        <section class="qrz-card">
+          <div class="qrz-card-head"><span class="qrz-head-label"><i data-lucide="send" class="w-4 h-4" aria-hidden="true"></i>ส่งกระดาษคำตอบแล้ว</span></div>
+          <div class="qrz-big"><span id="exam-zoom-submitted" class="qrz-number">0</span><span class="qrz-unit">คน</span></div>
+          <div class="qrz-bar"><div id="exam-zoom-progress" class="qrz-bar-fill" style="width:0%;background:#8fd3dd"></div></div>
+        </section>
+        <section class="qrz-card">
+          <div class="qrz-card-head"><span class="qrz-head-label"><i data-lucide="award" class="w-4 h-4" aria-hidden="true"></i>คะแนนเฉลี่ย</span></div>
+          <div class="qrz-avg">
+            <div id="exam-zoom-ring" class="qrz-ring"><span id="exam-zoom-avg" class="qrz-number">—</span></div>
+            <p id="exam-zoom-avg-detail" class="qrz-avg-detail">ยังไม่มีผู้ส่ง</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
   <div id="present-overlay" role="dialog" aria-modal="true" aria-label="โหมดฉายจอโปรเจกเตอร์">
     <button id="present-fullscreen" type="button" class="present-icon-btn" aria-label="ขยายเต็มหน้าจอ"><i data-lucide="maximize" class="w-5 h-5"></i></button>
     <button id="present-close" type="button" class="present-icon-btn" aria-label="ปิดโหมดฉายจอ"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -522,7 +902,7 @@
 
 <script>
   // ============ เวอร์ชัน (แก้ทุกครั้งที่อัปเดต และบันทึกใน CHANGELOG.md) ============
-  const APP_VERSION = "2.11.0";
+  const APP_VERSION = "2.12.0";
   const APP_UPDATED = "2026-09-16";
 
   // ============ ตั้งค่า Supabase (Project Settings → API) ============
@@ -566,6 +946,9 @@
   const urlParams = new URLSearchParams(location.search);
   const participantMode = urlParams.get("view") === "form";
   const urlActivityId = urlParams.get("activity") || null;
+  const examMode = urlParams.get("view") === "exam";
+  const examPhaseParam = urlParams.get("phase") === "post" ? "post" : "pre";
+  if (examMode) document.body.classList.add("participant-mode", "exam-mode");
   if (participantMode) document.body.classList.add("participant-mode");
 
   // ---------- helpers ----------
@@ -753,6 +1136,8 @@
       setDbStatus(true, "เชื่อมต่อฐานข้อมูลแล้ว");
       applyActivityName();
       renderAll();
+      refreshExamCounts();
+      if (state.isAdmin && $("admin-view").classList.contains("active")) loadExamAdmin();
     } catch (error) {
       console.error(error);
       const message = friendlyError(error, "โหลดข้อมูลไม่สำเร็จ");
@@ -949,6 +1334,7 @@
   $("present-overlay").addEventListener("click", (event) => { if (event.target.id === "present-overlay") closePresentMode(); });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
+    closeExamZoom();
     closeQrZoom();
     closePresentMode();
   });
@@ -1326,7 +1712,20 @@
       presentButton.type = "button";
       presentButton.addEventListener("click", () => openPresentMode(activity.id));
 
-      actions.append(viewButton, presentButton);
+      const examLinks = [["exam-pre", "สอบก่อนอบรม"], ["exam-post", "สอบหลังอบรม"]].map(([view, label]) => {
+        const button = el("button", "btn-soft rounded-full px-4 py-2 text-sm font-bold", label);
+        button.type = "button";
+        button.addEventListener("click", () => {
+          if (state.activityId !== activity.id) {
+            state.activityId = activity.id;
+            state.selected = {}; state.selectedStatus = ""; state.statusFilter = "all";
+            loadAll();
+          }
+          showView(view);
+        });
+        return button;
+      });
+      actions.append(viewButton, presentButton, ...examLinks);
       body.appendChild(actions);
       card.appendChild(body);
       holder.appendChild(card);
@@ -1356,7 +1755,7 @@
 
   // เบราว์เซอร์จะปล่อย Wake Lock อัตโนมัติเมื่อสลับแท็บ/พับหน้าจอ ต้องขอใหม่เมื่อกลับมาเห็นหน้าเว็บอีกครั้ง
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && $("present-overlay").classList.contains("show") && !screenWakeLock) {
+    if (document.visibilityState === "visible" && ($("present-overlay").classList.contains("show") || $("exam-zoom-overlay").classList.contains("show")) && !screenWakeLock) {
       requestScreenWakeLock();
     }
   });
@@ -1787,6 +2186,7 @@
   }
 
   function renderAll() {
+    renderExamPanels();
     ensurePresenceChannel(state.loaded ? activeFormActivityId() : null);
     syncPresenceTracking();
     renderQrLiveStats();
@@ -1818,6 +2218,7 @@
     document.querySelectorAll(".view-panel").forEach((panel) => panel.classList.remove("active"));
     $(`${viewName}-view`).classList.add("active");
     if (viewName === "admin") refreshAdmin();
+    if (viewName === "exam-pre" || viewName === "exam-post") { renderExamPanels(); refreshExamCounts(); }
     syncPresenceTracking();
   }
 
@@ -1876,6 +2277,7 @@
     }
     state.isAdmin = !!username;
     renderAdminState(username);
+    if (state.isAdmin) loadExamAdmin();
   }
 
   function handleExpired() {
@@ -1916,6 +2318,7 @@
     $("login-password").value = "";
     state.isAdmin = true;
     renderAdminState(data.username);
+    loadExamAdmin();
     showToast(`เข้าสู่ระบบแล้ว (${data.username})`);
   });
 
@@ -2198,6 +2601,753 @@
     }
   });
 
+  // =====================================================================
+  // แบบทดสอบก่อน/หลังอบรม
+  // =====================================================================
+  const EXAM_PREFIXES = ["เด็กชาย", "เด็กหญิง", "นาย", "นางสาว", "นาง"];
+  const EXAM_GRADES = ["ป.1", "ป.2", "ป.3", "ป.4", "ป.5", "ป.6", "ม.1", "ม.2", "ม.3", "ม.4", "ม.5", "ม.6"];
+  const EXAM_ROOM_COUNT = 15;
+  const CHOICE_LETTERS = ["ก", "ข", "ค", "ง", "จ"];
+  const EXAM_PHASE_LABEL = { pre: "ก่อนอบรม", post: "หลังอบรม" };
+  const EXAM_ERROR_TEXT = {
+    activity_not_found: "ไม่พบกิจกรรมนี้ ลิงก์อาจไม่ถูกต้องหรือกิจกรรมถูกลบแล้ว",
+    invalid_phase: "ลิงก์แบบทดสอบไม่ถูกต้อง กรุณาสแกน QR ใหม่",
+    exam_closed: "แบบทดสอบนี้ปิดรับการสอบแล้ว",
+    no_questions: "แบบทดสอบนี้ยังไม่มีข้อสอบ กรุณาแจ้งผู้ดูแล",
+    invalid_student_code: "กรุณากรอกรหัสนักเรียน",
+    invalid_prefix: "กรุณาเลือกคำนำหน้า",
+    invalid_name: "กรุณากรอกชื่อและนามสกุล",
+    invalid_grade: "กรุณาเลือกชั้น",
+    invalid_room: "กรุณาเลือกห้อง",
+    invalid_location: "กรุณาเลือกสถานที่สอบ",
+    attempt_not_found: "ไม่พบกระดาษคำตอบนี้ กรุณาเริ่มทำใหม่",
+    answers_too_large: "ข้อมูลคำตอบผิดปกติ กรุณาลองใหม่"
+  };
+
+  state.exam = { phase: "pre", overview: null, results: [], counts: null, loadedFor: null, settingsKey: null };
+  state.examTake = { info: null, paper: null, answers: {} };
+
+  function participantExamUrl(activityId, phase) {
+    const url = new URL(location.href);
+    url.search = ""; url.hash = "";
+    url.searchParams.set("view", "exam");
+    url.searchParams.set("activity", activityId);
+    url.searchParams.set("phase", phase);
+    return url.toString();
+  }
+
+  function setBumpNumber(id, text) {
+    const node = $(id);
+    if (!node || node.textContent === text) return;
+    node.textContent = text;
+    node.classList.remove("num-bump");
+    void node.offsetWidth;
+    node.classList.add("num-bump");
+  }
+
+  function formatThaiDateTime(value) {
+    if (!value) return "—";
+    return new Date(value).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" });
+  }
+
+  // ---------- หน้า สอบก่อน/หลังอบรม (QR + ตัวเลข) ----------
+  async function refreshExamCounts() {
+    if (!db || examMode) return;
+    const activityId = state.activityId;
+    if (!activityId) { state.exam.counts = null; renderExamPanels(); return; }
+    const { data, error } = await db.rpc("exam_counts", { p_activity_id: activityId });
+    if (error) { console.warn("โหลดจำนวนผู้สอบไม่สำเร็จ:", friendlyError(error, "")); return; }
+    if (activityId !== state.activityId) return;
+    state.exam.counts = data;
+    renderExamPanels();
+  }
+
+  function renderExamPanels() {
+    if (examMode) return;
+    const empty = state.loaded && !state.activities.length;
+    ["pre", "post"].forEach((phase) => {
+      $(`exam-${phase}-empty`).classList.toggle("hidden", !empty);
+      $(`exam-${phase}-content`).classList.toggle("hidden", empty || !state.activityId);
+      $(`exam-${phase}-subtitle`).textContent = state.activityId ? `กิจกรรม: ${activityName(state.activityId)}` : "";
+
+      const qr = $(`exam-${phase}-qr`);
+      const qrKey = state.activityId ? `${state.activityId}:${phase}` : "";
+      if (qr.dataset.key !== qrKey) {
+        qr.replaceChildren();
+        if (qrKey && typeof QRCode !== "undefined") {
+          new QRCode(qr, { text: participantExamUrl(state.activityId, phase), width: 300, height: 300, colorDark: "#4a4258", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+        }
+        qr.dataset.key = qrKey;
+      }
+
+      const c = (state.exam.counts && state.exam.counts[phase]) || { started: 0, submitted: 0, avg_percent: null, is_open: true, question_count: 0 };
+      setBumpNumber(`exam-${phase}-started`, Number(c.started || 0).toLocaleString("th-TH"));
+      setBumpNumber(`exam-${phase}-submitted`, Number(c.submitted || 0).toLocaleString("th-TH"));
+      $(`exam-${phase}-progress`).style.width = `${c.started ? Math.round((c.submitted / c.started) * 100) : 0}%`;
+      setBumpNumber(`exam-${phase}-avg`, c.avg_percent === null || c.avg_percent === undefined ? "—" : `${c.avg_percent}%`);
+      $(`exam-${phase}-qcount`).textContent = `คลังข้อสอบ ${Number(c.question_count || 0).toLocaleString("th-TH")} ข้อ`;
+
+      const badge = $(`exam-${phase}-badge`);
+      badge.classList.toggle("open", c.is_open !== false);
+      badge.classList.toggle("closed", c.is_open === false);
+      badge.textContent = c.is_open === false ? "ปิดรับการสอบ" : "เปิดรับการสอบ";
+    });
+    renderExamZoomStats();
+  }
+
+  let examZoomPhase = null;
+
+  function openExamZoom(phase) {
+    if (!state.activityId || typeof QRCode === "undefined") return;
+    examZoomPhase = phase;
+    const frame = $("exam-zoom-frame");
+    frame.replaceChildren();
+    new QRCode(frame, { text: participantExamUrl(state.activityId, phase), width: 640, height: 640, colorDark: "#4a4258", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+    $("exam-zoom-name").textContent = `${activityName(state.activityId)} · สอบ${EXAM_PHASE_LABEL[phase]}`;
+    $("exam-zoom-hint").textContent = `สแกนเพื่อเข้าสอบ${EXAM_PHASE_LABEL[phase]}`;
+    renderExamZoomStats();
+    $("exam-zoom-overlay").classList.add("show");
+    document.body.style.overflow = "hidden";
+    requestScreenWakeLock();
+    refreshExamCounts();
+  }
+
+  function closeExamZoom() {
+    if (!examZoomPhase) return;
+    examZoomPhase = null;
+    $("exam-zoom-overlay").classList.remove("show");
+    document.body.style.overflow = "";
+    releaseScreenWakeLock();
+  }
+
+  function renderExamZoomStats() {
+    if (!examZoomPhase) return;
+    const c = (state.exam.counts && state.exam.counts[examZoomPhase]) || { started: 0, submitted: 0, avg_percent: null };
+    setLiveNumber("exam-zoom-started", Number(c.started || 0).toLocaleString("th-TH"));
+    setLiveNumber("exam-zoom-submitted", Number(c.submitted || 0).toLocaleString("th-TH"));
+    $("exam-zoom-progress").style.width = `${c.started ? Math.round((c.submitted / c.started) * 100) : 0}%`;
+    const hasAvg = c.avg_percent !== null && c.avg_percent !== undefined;
+    setLiveNumber("exam-zoom-avg", hasAvg ? `${c.avg_percent}%` : "—");
+    $("exam-zoom-ring").style.setProperty("--pct", String(hasAvg ? c.avg_percent : 0));
+    $("exam-zoom-avg-detail").textContent = hasAvg
+      ? `จากผู้ส่งกระดาษคำตอบแล้ว ${Number(c.submitted).toLocaleString("th-TH")} คน`
+      : "ยังไม่มีผู้ส่งกระดาษคำตอบ";
+  }
+
+  ["pre", "post"].forEach((phase) => {
+    $(`exam-${phase}-qr`).addEventListener("click", () => openExamZoom(phase));
+    $(`exam-${phase}-zoom`).addEventListener("click", () => openExamZoom(phase));
+    $(`exam-${phase}-copy`).addEventListener("click", async () => {
+      if (!state.activityId) return showToast("กรุณาเลือกกิจกรรมก่อน");
+      const link = participantExamUrl(state.activityId, phase);
+      try {
+        await navigator.clipboard.writeText(link);
+        showToast(`คัดลอกลิงก์สอบ${EXAM_PHASE_LABEL[phase]}แล้ว`);
+      } catch {
+        prompt("คัดลอกลิงก์นี้", link);
+      }
+    });
+  });
+  $("exam-zoom-close").addEventListener("click", closeExamZoom);
+  $("exam-zoom-overlay").addEventListener("click", (event) => { if (event.target.id === "exam-zoom-overlay") closeExamZoom(); });
+
+  // อัปเดตตัวเลขอัตโนมัติ: หน้าแบบทดสอบทุก 5 วินาที, ผลสอบในหน้าตั้งค่าทุก 10 วินาที
+  let examPollTick = 0;
+  setInterval(() => {
+    if (examMode || !db || document.hidden) return;
+    examPollTick += 1;
+    const examVisible = $("exam-pre-view").classList.contains("active") || $("exam-post-view").classList.contains("active") || !!examZoomPhase;
+    if (examVisible) refreshExamCounts();
+    if (examPollTick % 2 === 0 && state.isAdmin && $("admin-view").classList.contains("active")) loadExamAdmin();
+  }, 5000);
+
+  // ---------- ฝั่งผู้สอบ (มือถือ) ----------
+  function examStorageKey() {
+    return `exam_attempt:${urlActivityId}:${examPhaseParam}`;
+  }
+
+  function readExamStore() {
+    try { return JSON.parse(localStorage.getItem(examStorageKey()) || "null"); } catch { return null; }
+  }
+
+  function writeExamStore(value) {
+    try {
+      if (value) localStorage.setItem(examStorageKey(), JSON.stringify(value));
+      else localStorage.removeItem(examStorageKey());
+    } catch { /* ignore */ }
+  }
+
+  function showExamStage(stage) {
+    const map = { loading: "exam-take-loading", error: "exam-take-error", register: "exam-register-form", sheet: "exam-sheet", result: "exam-result" };
+    Object.entries(map).forEach(([key, id]) => $(id).classList.toggle("hidden", key !== stage));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function showExamError(title, text) {
+    $("exam-take-error-title").textContent = title;
+    $("exam-take-error-text").textContent = text;
+    showExamStage("error");
+  }
+
+  function fillSelect(select, values, placeholder, labelFor) {
+    select.replaceChildren();
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = placeholder;
+    select.appendChild(first);
+    values.forEach((value) => {
+      const option = document.createElement("option");
+      option.value = String(value);
+      option.textContent = labelFor ? labelFor(value) : String(value);
+      select.appendChild(option);
+    });
+  }
+
+  async function initExamTake() {
+    fillSelect($("exam-prefix"), EXAM_PREFIXES, "เลือกคำนำหน้า");
+    fillSelect($("exam-grade"), EXAM_GRADES, "เลือกชั้น");
+    fillSelect($("exam-room"), Array.from({ length: EXAM_ROOM_COUNT }, (_, i) => i + 1), "เลือกห้อง", (n) => `ห้อง ${n}`);
+
+    if (!urlActivityId) return showExamError("ลิงก์ไม่ครบ", "กรุณาสแกน QR Code ของแบบทดสอบใหม่อีกครั้ง");
+
+    const stored = readExamStore();
+    if (stored && stored.attempt_id) {
+      const { data, error } = await db.rpc("exam_resume", { p_attempt_id: stored.attempt_id });
+      if (!error && data && data.ok) {
+        setDbStatus(true, "เชื่อมต่อฐานข้อมูลแล้ว");
+        if (data.submitted) return showExamResult(data);
+        state.examTake.paper = data;
+        state.examTake.answers = stored.answers || {};
+        return renderAnswerSheet();
+      }
+      writeExamStore(null);
+    }
+    await loadExamInfo();
+  }
+
+  async function loadExamInfo() {
+    showExamStage("loading");
+    const { data, error } = await db.rpc("exam_public_info", { p_activity_id: urlActivityId, p_phase: examPhaseParam });
+    if (error) {
+      setDbStatus(false, friendlyError(error, "โหลดแบบทดสอบไม่สำเร็จ"));
+      return showExamError("โหลดแบบทดสอบไม่สำเร็จ", error.code === "22P02" ? EXAM_ERROR_TEXT.invalid_phase : friendlyError(error, "กรุณาลองใหม่อีกครั้ง"));
+    }
+    setDbStatus(true, "เชื่อมต่อฐานข้อมูลแล้ว");
+    if (!data || !data.ok) return showExamError("เข้าสอบไม่ได้", EXAM_ERROR_TEXT[data && data.error] || "กรุณาลองใหม่อีกครั้ง");
+
+    state.examTake.info = data;
+    document.title = `${data.title} · ${data.activity_name}`;
+    $("exam-register-activity").textContent = data.activity_name;
+    $("exam-register-title").textContent = data.title;
+    $("exam-register-meta").textContent = `สอบ${EXAM_PHASE_LABEL[data.phase]} · ${Number(data.question_total).toLocaleString("th-TH")} ข้อ`;
+
+    if (!data.is_open) return showExamError("แบบทดสอบปิดรับแล้ว", EXAM_ERROR_TEXT.exam_closed);
+    if (!data.question_total) return showExamError("ยังไม่มีข้อสอบ", EXAM_ERROR_TEXT.no_questions);
+
+    const locations = data.locations || [];
+    $("exam-location-wrap").classList.toggle("hidden", !locations.length);
+    const currentLocation = $("exam-location").value;
+    fillSelect($("exam-location"), locations, "เลือกสถานที่สอบ");
+    if (locations.length === 1) $("exam-location").value = locations[0];
+    else if (locations.includes(currentLocation)) $("exam-location").value = currentLocation;
+
+    $("exam-register-message").textContent = "";
+    showExamStage("register");
+  }
+
+  $("exam-take-retry").addEventListener("click", () => { if (db && examMode) loadExamInfo(); });
+
+  $("exam-register-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const message = $("exam-register-message");
+    const info = state.examTake.info || { locations: [] };
+    const values = {
+      code: $("exam-code").value.trim(),
+      prefix: $("exam-prefix").value,
+      first: $("exam-first").value.trim(),
+      last: $("exam-last").value.trim(),
+      grade: $("exam-grade").value,
+      room: Number($("exam-room").value),
+      location: $("exam-location").value
+    };
+    const problem =
+      !values.code ? ["invalid_student_code", "exam-code"] :
+      !values.prefix ? ["invalid_prefix", "exam-prefix"] :
+      (!values.first || !values.last) ? ["invalid_name", values.first ? "exam-last" : "exam-first"] :
+      !values.grade ? ["invalid_grade", "exam-grade"] :
+      !values.room ? ["invalid_room", "exam-room"] :
+      ((info.locations || []).length && !values.location) ? ["invalid_location", "exam-location"] : null;
+    if (problem) {
+      message.textContent = EXAM_ERROR_TEXT[problem[0]];
+      message.style.color = "var(--danger)";
+      $(problem[1]).focus();
+      return;
+    }
+
+    const button = $("exam-register-submit");
+    setLoading(button, true);
+    message.textContent = "กำลังเตรียมกระดาษคำตอบ...";
+    message.style.color = "var(--muted)";
+    const { data, error } = await db.rpc("exam_start", {
+      p_activity_id: urlActivityId, p_phase: examPhaseParam,
+      p_student_code: values.code, p_prefix: values.prefix,
+      p_first_name: values.first, p_last_name: values.last,
+      p_grade: values.grade, p_room: values.room, p_location: values.location || null
+    });
+    setLoading(button, false);
+
+    if (error) {
+      message.textContent = friendlyError(error, "เข้าสอบไม่สำเร็จ กรุณาลองใหม่");
+      message.style.color = "var(--danger)";
+      return;
+    }
+    if (!data || !data.ok) {
+      const code = data && data.error;
+      if (code === "exam_closed" || code === "no_questions" || code === "activity_not_found") return showExamError("เข้าสอบไม่ได้", EXAM_ERROR_TEXT[code]);
+      message.textContent = EXAM_ERROR_TEXT[code] || "เข้าสอบไม่สำเร็จ กรุณาลองใหม่";
+      message.style.color = "var(--danger)";
+      return;
+    }
+
+    message.textContent = "";
+    state.examTake.paper = data;
+    state.examTake.answers = {};
+    writeExamStore({ attempt_id: data.attempt_id, answers: {} });
+    renderAnswerSheet();
+  });
+
+  function renderAnswerSheet() {
+    const paper = state.examTake.paper;
+    const student = paper.student;
+    document.title = `${paper.title} · ${paper.activity_name}`;
+    $("sheet-title").textContent = paper.title;
+    $("sheet-location").textContent = student.location || "—";
+    $("sheet-code").textContent = student.student_code;
+    $("sheet-name").textContent = `${student.prefix}${student.first_name} ${student.last_name}`;
+    $("sheet-grade").textContent = student.grade;
+    $("sheet-room").textContent = String(student.room);
+
+    const list = $("sheet-questions");
+    list.replaceChildren();
+    const validIds = new Set(paper.questions.map((q) => q.id));
+    Object.keys(state.examTake.answers).forEach((id) => { if (!validIds.has(id)) delete state.examTake.answers[id]; });
+
+    paper.questions.forEach((question, index) => {
+      const item = el("li", "sheet-q");
+      item.id = `sheet-q-${question.id}`;
+      const text = el("p", "sheet-q-text");
+      text.append(el("span", "sheet-q-no", String(index + 1)), el("span", "", question.text));
+      const choices = el("div", "sheet-choices");
+      choices.setAttribute("role", "radiogroup");
+      choices.setAttribute("aria-label", `ข้อ ${index + 1}`);
+
+      (question.choices || []).forEach((choiceText, choiceIndex) => {
+        const button = el("button", "sheet-choice");
+        button.type = "button";
+        button.setAttribute("role", "radio");
+        button.setAttribute("aria-checked", String(state.examTake.answers[question.id] === choiceIndex));
+        button.setAttribute("aria-label", `ข้อ ${index + 1} ตัวเลือก ${CHOICE_LETTERS[choiceIndex]} ${choiceText}`);
+        button.append(el("span", "bubble", CHOICE_LETTERS[choiceIndex]), el("span", "choice-text", choiceText));
+        button.addEventListener("click", () => {
+          const answers = state.examTake.answers;
+          if (answers[question.id] === choiceIndex) delete answers[question.id]; // แตะวงเดิมซ้ำ = ลบคำตอบ
+          else answers[question.id] = choiceIndex;
+          choices.querySelectorAll(".sheet-choice").forEach((b, i) => b.setAttribute("aria-checked", String(answers[question.id] === i)));
+          writeExamStore({ attempt_id: paper.attempt_id, answers });
+          updateSheetProgress();
+          hideSheetConfirm();
+        });
+        choices.appendChild(button);
+      });
+
+      item.append(text, choices);
+      list.appendChild(item);
+    });
+
+    hideSheetConfirm();
+    updateSheetProgress();
+    showExamStage("sheet");
+  }
+
+  function unansweredQuestionNumbers() {
+    const paper = state.examTake.paper;
+    return paper.questions.map((q, i) => (state.examTake.answers[q.id] === undefined ? i + 1 : null)).filter(Boolean);
+  }
+
+  function updateSheetProgress() {
+    const total = state.examTake.paper.questions.length;
+    const answered = total - unansweredQuestionNumbers().length;
+    $("sheet-progress-text").textContent = `ตอบแล้ว ${answered} / ${total} ข้อ`;
+    $("sheet-progress").style.width = `${total ? Math.round((answered / total) * 100) : 0}%`;
+  }
+
+  function hideSheetConfirm() {
+    $("sheet-confirm").classList.add("hidden");
+    $("sheet-submit").classList.remove("hidden");
+  }
+
+  $("sheet-submit").addEventListener("click", () => {
+    const missing = unansweredQuestionNumbers();
+    const total = state.examTake.paper.questions.length;
+    const shown = missing.slice(0, 10).join(", ") + (missing.length > 10 ? " ..." : "");
+    $("sheet-confirm-text").textContent = missing.length
+      ? `ยังไม่ได้ตอบ ${missing.length} ข้อ (ข้อ ${shown}) ต้องการส่งเลยหรือไม่? ส่งแล้วแก้ไขคำตอบไม่ได้`
+      : `ตอบครบ ${total} ข้อแล้ว ยืนยันส่งกระดาษคำตอบ? ส่งแล้วแก้ไขคำตอบไม่ได้`;
+    $("sheet-confirm-back").textContent = missing.length ? "ไปข้อที่ยังไม่ตอบ" : "กลับไปตรวจคำตอบ";
+    $("sheet-confirm").classList.remove("hidden");
+    $("sheet-submit").classList.add("hidden");
+  });
+
+  $("sheet-confirm-back").addEventListener("click", () => {
+    hideSheetConfirm();
+    const missing = unansweredQuestionNumbers();
+    const paper = state.examTake.paper;
+    const target = missing.length ? $(`sheet-q-${paper.questions[missing[0] - 1].id}`) : $("sheet-questions").firstElementChild;
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.classList.add("flash");
+      setTimeout(() => target.classList.remove("flash"), 1200);
+    }
+  });
+
+  $("sheet-confirm-yes").addEventListener("click", async () => {
+    const paper = state.examTake.paper;
+    const button = $("sheet-confirm-yes");
+    setLoading(button, true);
+    const { data, error } = await db.rpc("exam_submit", { p_attempt_id: paper.attempt_id, p_answers: state.examTake.answers });
+    setLoading(button, false);
+    if (error) return showToast(friendlyError(error, "ส่งกระดาษคำตอบไม่สำเร็จ กรุณาลองอีกครั้ง"));
+    if (!data || !data.ok) {
+      if (data && data.error === "attempt_not_found") {
+        writeExamStore(null);
+        return showExamError("ส่งไม่สำเร็จ", EXAM_ERROR_TEXT.attempt_not_found);
+      }
+      return showToast(EXAM_ERROR_TEXT[data && data.error] || "ส่งกระดาษคำตอบไม่สำเร็จ กรุณาลองอีกครั้ง");
+    }
+    writeExamStore({ attempt_id: data.attempt_id, submitted: true });
+    showExamResult(data);
+  });
+
+  function showExamResult(data) {
+    const student = data.student;
+    const score = Number(data.score || 0);
+    const total = Number(data.total || 0);
+    const percent = total ? Math.round((score / total) * 100) : 0;
+    document.title = `ผลสอบ · ${data.title}`;
+    $("result-title").textContent = `${data.title} · ${data.activity_name}`;
+    $("result-score").textContent = score.toLocaleString("th-TH");
+    $("result-total").textContent = total.toLocaleString("th-TH");
+    $("result-percent").textContent = `คิดเป็น ${percent}%`;
+    $("result-percent").style.color = percent >= 80 ? "var(--success)" : percent >= 50 ? "#b7791f" : "var(--danger)";
+    $("result-code").textContent = student.student_code;
+    $("result-name").textContent = `${student.prefix}${student.first_name} ${student.last_name}`;
+    $("result-class").textContent = `${student.grade} / ห้อง ${student.room}`;
+    $("result-location").textContent = student.location || "—";
+    $("result-time").textContent = formatThaiDateTime(data.submitted_at);
+    showExamStage("result");
+  }
+
+  $("result-new").addEventListener("click", () => {
+    writeExamStore(null);
+    state.examTake.paper = null;
+    state.examTake.answers = {};
+    ["exam-code", "exam-first", "exam-last"].forEach((id) => ($(id).value = ""));
+    ["exam-prefix", "exam-grade", "exam-room"].forEach((id) => ($(id).value = ""));
+    loadExamInfo();
+  });
+
+  // ---------- ฝั่งผู้ดูแล: จัดการแบบทดสอบ ----------
+  (function buildChoiceInputs() {
+    const holder = $("exam-choice-inputs");
+    CHOICE_LETTERS.forEach((letter, index) => {
+      const row = el("div", "flex items-center gap-2");
+      const key = el("span", "exam-choice-key", letter);
+      const input = document.createElement("input");
+      input.type = "text";
+      input.id = `exam-choice-${index}`;
+      input.maxLength = 300;
+      input.placeholder = index < 2 ? `ตัวเลือก ${letter}` : `ตัวเลือก ${letter} (ไม่บังคับ)`;
+      input.className = "min-w-0 flex-1 rounded-xl border border-[#dfd3e5] bg-white/90 px-3 py-2 outline-none";
+      input.setAttribute("aria-label", `ตัวเลือก ${letter}`);
+      const radioLabel = el("label", "inline-flex shrink-0 items-center gap-1 text-xs font-bold text-[#438b69]");
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = "exam-correct";
+      radio.value = String(index);
+      radio.className = "h-4 w-4 accent-[#438b69]";
+      radioLabel.append(radio, document.createTextNode("เฉลย"));
+      row.append(key, input, radioLabel);
+      holder.appendChild(row);
+    });
+  })();
+
+  function examPhaseName(phase) { return EXAM_PHASE_LABEL[phase]; }
+
+  async function loadExamAdmin() {
+    if (!db || examMode || !state.isAdmin || !state.activityId) return;
+    const activityId = state.activityId;
+    const phase = state.exam.phase;
+    if (state.exam.loadedFor !== activityId) {
+      state.exam.overview = null;
+      state.exam.results = [];
+      state.exam.settingsKey = null;
+      renderExamAdmin();
+    }
+    const [overview, results] = await Promise.all([
+      adminRpc("admin_exam_overview", { p_activity_id: activityId }),
+      adminRpc("admin_exam_results", { p_activity_id: activityId, p_phase: phase })
+    ]);
+    if (activityId !== state.activityId || phase !== state.exam.phase) return;
+    const failed = [overview, results].find((r) => r.error);
+    if (failed) {
+      if (failed.error.code !== "42501") $("exam-admin-status").textContent = friendlyError(failed.error, "โหลดข้อมูลแบบทดสอบไม่สำเร็จ");
+      return;
+    }
+    state.exam.overview = overview.data;
+    state.exam.results = results.data || [];
+    state.exam.loadedFor = activityId;
+    renderExamAdmin();
+  }
+
+  function renderExamAdmin() {
+    const phase = state.exam.phase;
+    const other = phase === "pre" ? "post" : "pre";
+    document.querySelectorAll("[data-exam-phase]").forEach((button) => {
+      const active = button.dataset.examPhase === phase;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+    });
+    document.querySelectorAll(".exam-phase-name").forEach((node) => (node.textContent = examPhaseName(phase)));
+
+    const overview = state.exam.overview;
+    $("exam-admin-status").textContent = overview ? "" : "กำลังโหลดข้อมูลแบบทดสอบ...";
+    if (!overview) {
+      ["exam-location-list", "exam-question-list", "exam-result-rows"].forEach((id) => $(id).replaceChildren());
+      return;
+    }
+
+    // ตั้งค่า: ไม่เขียนทับขณะผู้ดูแลกำลังพิมพ์
+    const settings = (overview.settings && overview.settings[phase]) || { title: "", question_mode: "ordered", question_count: null, is_open: true };
+    const settingsKey = `${state.activityId}:${phase}:${settings.updated_at || "default"}`;
+    if (state.exam.settingsKey !== settingsKey && !$("exam-settings-form").contains(document.activeElement)) {
+      $("exam-title-input").value = settings.title || "";
+      $("exam-mode-input").value = settings.question_mode || "ordered";
+      $("exam-count-input").value = settings.question_count || "";
+      $("exam-open-input").checked = settings.is_open !== false;
+      state.exam.settingsKey = settingsKey;
+    }
+    $("exam-count-wrap").classList.toggle("hidden", $("exam-mode-input").value !== "random");
+
+    // สถานที่สอบ
+    renderAdminList(overview.locations || [], "exam-location-list", "exam_locations", (r) => r.name);
+
+    // ข้อสอบ
+    const questions = (overview.questions || []).filter((q) => q.phase === phase);
+    const otherCount = (overview.questions || []).filter((q) => q.phase === other).length;
+    const modeText = settings.question_mode === "random"
+      ? `ผู้สอบแต่ละคนได้สุ่ม ${settings.question_count ? Math.min(settings.question_count, questions.length) : questions.length} ข้อ (สลับลำดับ)`
+      : "ผู้สอบได้ครบทุกข้อตามลำดับ";
+    $("exam-question-summary").textContent = `คลังข้อสอบ${examPhaseName(phase)} ${questions.length} ข้อ · ${modeText}`;
+
+    const copyButton = $("exam-copy-questions");
+    const preCount = phase === "pre" ? questions.length : otherCount;
+    copyButton.textContent = phase === "pre" ? "คัดลอกข้อสอบชุดนี้ไปใช้หลังอบรม" : "คัดลอกข้อสอบจากก่อนอบรมมาใช้";
+    copyButton.disabled = preCount === 0;
+    copyButton.dataset.confirm = "";
+
+    const list = $("exam-question-list");
+    list.replaceChildren();
+    if (!questions.length) list.appendChild(el("p", "text-sm text-[#7f758c]", "ยังไม่มีข้อสอบ"));
+    questions.forEach((question, index) => {
+      const item = el("li", "rounded-2xl border border-white/80 bg-white/65 px-4 py-3");
+      const top = el("div", "flex items-start justify-between gap-3");
+      top.appendChild(el("p", "font-semibold leading-relaxed", `${index + 1}. ${question.question_text}`));
+      const actions = el("div", "shrink-0 flex gap-2");
+      actions.append(...buildDeleteControls("exam_questions", question.id));
+      top.appendChild(actions);
+      const choices = el("div", "mt-2 grid gap-1 sm:grid-cols-2");
+      (question.choices || []).forEach((choice, choiceIndex) => {
+        const correct = choiceIndex === question.correct_index;
+        const row = el("p", `flex items-center text-sm ${correct ? "font-bold text-[#2f7a57]" : ""}`);
+        row.append(el("span", `exam-choice-key ${correct ? "correct" : ""}`, CHOICE_LETTERS[choiceIndex]), el("span", "", correct ? `${choice} (เฉลย)` : choice));
+        choices.appendChild(row);
+      });
+      item.append(top, choices);
+      list.appendChild(item);
+    });
+
+    // ผลสอบ
+    const results = state.exam.results || [];
+    const submitted = results.filter((r) => r.submitted_at);
+    const avgPercent = submitted.length
+      ? Math.round(submitted.reduce((sum, r) => sum + (r.total ? (r.score / r.total) * 100 : 0), 0) / submitted.length)
+      : null;
+    $("exam-result-summary").textContent = `เข้าสอบ ${results.length} คน · ส่งแล้ว ${submitted.length} คน` + (avgPercent === null ? "" : ` · คะแนนเฉลี่ย ${avgPercent}%`);
+    $("exam-download-csv").disabled = !results.length;
+
+    const rows = $("exam-result-rows");
+    rows.replaceChildren();
+    if (!results.length) {
+      const tr = el("tr");
+      const td = el("td", "text-center text-[#7f758c]", "ยังไม่มีผู้เข้าสอบ");
+      td.colSpan = 8;
+      tr.appendChild(td);
+      rows.appendChild(tr);
+    }
+    results.forEach((r, index) => {
+      const tr = el("tr");
+      const scoreCell = el("td", "font-bold whitespace-nowrap", r.submitted_at ? `${r.score}/${r.total}` : "กำลังสอบ");
+      if (!r.submitted_at) scoreCell.classList.add("text-[#b7791f]");
+      const deleteCell = el("td", "whitespace-nowrap");
+      const deleteWrap = el("div", "flex gap-1");
+      deleteWrap.append(...buildDeleteControls("exam_attempts", r.id));
+      deleteCell.appendChild(deleteWrap);
+      tr.append(
+        el("td", "text-[#7f758c]", String(results.length - index)),
+        el("td", "whitespace-nowrap", r.submitted_at ? formatThaiDateTime(r.submitted_at) : "—"),
+        el("td", "whitespace-nowrap", r.student_code),
+        el("td", "whitespace-nowrap", `${r.prefix}${r.first_name} ${r.last_name}`),
+        el("td", "whitespace-nowrap", `${r.grade}/${r.room}`),
+        el("td", "", r.location || "—"),
+        scoreCell,
+        deleteCell
+      );
+      rows.appendChild(tr);
+    });
+  }
+
+  document.querySelectorAll("[data-exam-phase]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (state.exam.phase === button.dataset.examPhase) return;
+      state.exam.phase = button.dataset.examPhase;
+      state.exam.results = [];
+      state.exam.settingsKey = null;
+      renderExamAdmin();
+      loadExamAdmin();
+    });
+  });
+
+  $("exam-mode-input").addEventListener("change", () => {
+    $("exam-count-wrap").classList.toggle("hidden", $("exam-mode-input").value !== "random");
+  });
+
+  $("exam-settings-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!state.activityId) return showToast("กรุณาเลือกกิจกรรมก่อน");
+    const mode = $("exam-mode-input").value;
+    const countRaw = $("exam-count-input").value.trim();
+    const count = countRaw ? Number(countRaw) : null;
+    if (mode === "random" && count !== null && (!Number.isInteger(count) || count < 1 || count > 500)) {
+      return showToast("จำนวนข้อที่สุ่มต้องเป็นจำนวนเต็ม 1–500 หรือเว้นว่าง");
+    }
+    const button = event.currentTarget.querySelector("button[type=submit]");
+    setLoading(button, true);
+    const { error } = await adminRpc("admin_exam_save_settings", {
+      p_activity_id: state.activityId, p_phase: state.exam.phase,
+      p_title: $("exam-title-input").value.trim(), p_question_mode: mode,
+      p_question_count: count, p_is_open: $("exam-open-input").checked
+    });
+    setLoading(button, false);
+    if (error) { if (error.code !== "42501") showToast(friendlyError(error, "บันทึกการตั้งค่าไม่สำเร็จ")); return; }
+    showToast(`บันทึกการตั้งค่าสอบ${examPhaseName(state.exam.phase)}แล้ว`);
+    state.exam.settingsKey = null;
+    document.activeElement && document.activeElement.blur && document.activeElement.blur();
+    loadExamAdmin();
+    refreshExamCounts();
+  });
+
+  $("exam-location-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const name = $("exam-location-input").value.trim();
+    if (!name || !state.activityId) return;
+    const button = event.currentTarget.querySelector("button[type=submit]");
+    setLoading(button, true);
+    const { error } = await adminRpc("admin_exam_add_location", { p_activity_id: state.activityId, p_name: name });
+    setLoading(button, false);
+    if (error) { if (error.code !== "42501") showToast(friendlyError(error, "เพิ่มสถานที่สอบไม่สำเร็จ")); return; }
+    $("exam-location-input").value = "";
+    showToast("เพิ่มสถานที่สอบแล้ว");
+    loadExamAdmin();
+  });
+
+  $("exam-question-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!state.activityId) return showToast("กรุณาเลือกกิจกรรมก่อน");
+    const text = $("exam-q-text").value.trim();
+    const rawChoices = CHOICE_LETTERS.map((_, i) => $(`exam-choice-${i}`).value.trim());
+    const lastFilled = rawChoices.reduce((last, value, i) => (value ? i : last), -1);
+    const choices = rawChoices.slice(0, lastFilled + 1);
+    const checked = document.querySelector('input[name="exam-correct"]:checked');
+    const correct = checked ? Number(checked.value) : null;
+
+    if (!text) return showToast("กรุณากรอกโจทย์");
+    if (choices.length < 2) return showToast("กรุณากรอกตัวเลือกอย่างน้อย 2 ตัวเลือก (ก และ ข)");
+    if (choices.some((c) => !c)) return showToast("กรอกตัวเลือกให้ต่อเนื่องกัน ห้ามเว้นว่างตรงกลาง");
+    if (correct === null || correct >= choices.length) return showToast("กรุณาเลือกเฉลยจากตัวเลือกที่กรอกไว้");
+
+    const button = event.currentTarget.querySelector("button[type=submit]");
+    setLoading(button, true);
+    const { error } = await adminRpc("admin_exam_add_question", {
+      p_activity_id: state.activityId, p_phase: state.exam.phase,
+      p_question_text: text, p_choices: choices, p_correct_index: correct
+    });
+    setLoading(button, false);
+    if (error) { if (error.code !== "42501") showToast(friendlyError(error, "เพิ่มข้อสอบไม่สำเร็จ")); return; }
+    $("exam-q-text").value = "";
+    CHOICE_LETTERS.forEach((_, i) => ($(`exam-choice-${i}`).value = ""));
+    if (checked) checked.checked = false;
+    $("exam-q-text").focus();
+    showToast(`เพิ่มข้อสอบ${examPhaseName(state.exam.phase)}แล้ว`);
+    loadExamAdmin();
+  });
+
+  $("exam-copy-questions").addEventListener("click", async () => {
+    const button = $("exam-copy-questions");
+    if (button.dataset.confirm !== "yes") {
+      button.dataset.confirm = "yes";
+      button.textContent = "กดอีกครั้งเพื่อยืนยันคัดลอก";
+      setTimeout(() => { if (button.dataset.confirm === "yes") renderExamAdmin(); }, 4000);
+      return;
+    }
+    button.dataset.confirm = "";
+    setLoading(button, true);
+    const { data, error } = await adminRpc("admin_exam_copy_questions", { p_activity_id: state.activityId, p_from_phase: "pre", p_to_phase: "post" });
+    setLoading(button, false);
+    if (error) { if (error.code !== "42501") showToast(friendlyError(error, "คัดลอกข้อสอบไม่สำเร็จ")); return; }
+    showToast(`คัดลอกข้อสอบไปหลังอบรมแล้ว ${data} ข้อ`);
+    loadExamAdmin();
+  });
+
+  $("exam-refresh-results").addEventListener("click", loadExamAdmin);
+
+  $("exam-download-csv").addEventListener("click", () => {
+    const results = state.exam.results || [];
+    if (!results.length) return;
+    const header = ["ลำดับ", "เวลาเริ่ม", "เวลาส่ง", "รหัสนักเรียน", "คำนำหน้า", "ชื่อ", "นามสกุล", "ชั้น", "ห้อง", "สถานที่สอบ", "คะแนน", "คะแนนเต็ม", "ร้อยละ", "สถานะ"];
+    const escape = (value) => {
+      const text = value === null || value === undefined ? "" : String(value);
+      return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    };
+    const lines = [header.map(escape).join(",")];
+    [...results].reverse().forEach((r, index) => {
+      lines.push([
+        index + 1, formatThaiDateTime(r.started_at), r.submitted_at ? formatThaiDateTime(r.submitted_at) : "",
+        r.student_code, r.prefix, r.first_name, r.last_name, r.grade, r.room, r.location || "",
+        r.submitted_at ? r.score : "", r.submitted_at ? r.total : r.question_count,
+        r.submitted_at && r.total ? Math.round((r.score / r.total) * 100) : "",
+        r.submitted_at ? "ส่งแล้ว" : "ยังไม่ส่ง"
+      ].map(escape).join(","));
+    });
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `ผลสอบ${examPhaseName(state.exam.phase)}-${activityName(state.activityId) || "กิจกรรม"}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  });
+
   // ---------- init ----------
   document.addEventListener("DOMContentLoaded", async () => {
     $("app-version").textContent = `เวอร์ชัน ${APP_VERSION} (อัปเดต ${new Date(APP_UPDATED).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" })})`;
@@ -2205,13 +3355,20 @@
     if (window.lucide) lucide.createIcons();
     applyActivityName();
     renderAll();
-    if (participantMode) showView("form");
+    if (examMode) showView("exam-take");
+    else if (participantMode) showView("form");
     else showView("home");
 
     if (!db) {
       $("config-warning").textContent = dbInitError;
       $("config-warning").classList.remove("hidden");
       setDbStatus(false, dbInitError);
+      if (examMode) showExamError("เชื่อมต่อระบบไม่ได้", dbInitError);
+      return;
+    }
+
+    if (examMode) {
+      initExamTake();
       return;
     }
 
