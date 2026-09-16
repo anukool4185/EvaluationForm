@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="version" content="2.6.0">
+  <meta name="version" content="2.7.0">
   <title>ระบบประเมินกิจกรรม</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
@@ -79,8 +79,12 @@
     .toast { opacity: 0; transform: translateY(15px); pointer-events: none; transition: opacity .25s, transform .25s; }
     .toast.show { opacity: 1; transform: translateY(0); }
 
-    .home-card { transition: transform .16s ease, box-shadow .16s ease; }
+    .home-card { transition: transform .16s ease, box-shadow .16s ease; overflow: hidden; }
     .home-card:hover { transform: translateY(-2px); box-shadow: 0 20px 40px rgba(93,72,111,.14); }
+    .home-card-poster { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+    .home-card-body { padding: 1.25rem 1.5rem 1.5rem; }
+
+    #present-poster { max-width: min(70vw, 560px); max-height: 34vh; object-fit: contain; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
 
     #present-overlay { position: fixed; inset: 0; z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 40px; padding: 40px 24px; background: linear-gradient(160deg, #241a30, #3a2740); color: #fff; text-align: center; }
     #present-overlay.show { display: flex; }
@@ -271,10 +275,21 @@
         <section class="pastel-card mb-6 p-6 sm:p-7">
           <h3 class="display-font text-xl font-bold">จัดการกิจกรรม</h3>
           <p class="mt-1 text-sm text-[#7f758c]">สร้างกิจกรรมใหม่ แล้วกด “เลือก” เพื่อออกแบบคำถามของกิจกรรมนั้น</p>
-          <form id="activity-form" class="mt-4 flex flex-col gap-3 sm:flex-row">
-            <label class="sr-only" for="activity-name-input">ชื่อกิจกรรมใหม่</label>
-            <input id="activity-name-input" type="text" maxlength="200" required placeholder="ชื่อกิจกรรมใหม่" class="min-w-0 flex-1 rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
-            <button type="submit" class="btn-primary rounded-full px-5 py-3 font-bold disabled:opacity-60">สร้างกิจกรรม</button>
+          <form id="activity-form" class="mt-4 space-y-3">
+            <div class="flex flex-col gap-3 sm:flex-row">
+              <label class="sr-only" for="activity-name-input">ชื่อกิจกรรมใหม่</label>
+              <input id="activity-name-input" type="text" maxlength="200" required placeholder="ชื่อกิจกรรมใหม่" class="min-w-0 flex-1 rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
+              <button type="submit" class="btn-primary rounded-full px-5 py-3 font-bold disabled:opacity-60 whitespace-nowrap">สร้างกิจกรรม</button>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+              <label for="activity-poster-input" class="btn-soft cursor-pointer rounded-full px-4 py-2 text-sm font-bold">
+                <span class="inline-flex items-center gap-2"><i data-lucide="image-plus" class="w-4 h-4"></i>เพิ่มรูปภาพ/โปสเตอร์ (ไม่บังคับ)</span>
+              </label>
+              <input id="activity-poster-input" type="file" accept="image/*" class="hidden">
+              <img id="activity-poster-preview" class="hidden h-14 w-14 rounded-xl object-cover border border-[#dfd3e5]" alt="ตัวอย่างรูปภาพที่จะอัปโหลด">
+              <button id="activity-poster-clear" type="button" class="hidden text-xs font-semibold text-[#b84e6b]">ลบรูปที่เลือก</button>
+              <span id="activity-poster-status" class="text-xs text-[#7f758c]"></span>
+            </div>
           </form>
           <div id="admin-activity-list" class="mt-6 space-y-3"></div>
         </section>
@@ -392,7 +407,7 @@
   </nav>
 
   <footer class="max-w-7xl mx-auto px-5 pb-8 md:px-8 text-center text-xs text-[#9a90a6]">
-    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.6.0</span>
+    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.7.0</span>
     <span id="db-status" class="ml-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 font-semibold">กำลังตรวจการเชื่อมต่อ...</span>
   </footer>
 
@@ -409,6 +424,7 @@
 
   <div id="present-overlay" role="dialog" aria-modal="true" aria-label="โหมดฉายจอโปรเจกเตอร์">
     <button id="present-close" type="button" aria-label="ปิดโหมดฉายจอ"><i data-lucide="x" class="w-6 h-6"></i></button>
+    <img id="present-poster" class="hidden" alt="">
     <p id="present-activity-name" class="display-font font-bold"></p>
     <div class="flex flex-wrap items-center justify-center gap-x-16 gap-y-10">
       <div id="present-qrcode" class="qr-frame"></div>
@@ -426,7 +442,7 @@
 
 <script>
   // ============ เวอร์ชัน (แก้ทุกครั้งที่อัปเดต และบันทึกใน CHANGELOG.md) ============
-  const APP_VERSION = "2.6.0";
+  const APP_VERSION = "2.7.0";
   const APP_UPDATED = "2026-09-16";
 
   // ============ ตั้งค่า Supabase (Project Settings → API) ============
@@ -559,6 +575,43 @@
     return `${fallback} (${error.message})`;
   }
 
+  // ---------- image upload: ย่อและบีบอัดรูปก่อนแปลงเป็น data URL ----------
+  const POSTER_MAX_DIMENSION = 1600;
+  const POSTER_MAX_SOURCE_BYTES = 20 * 1024 * 1024; // 20MB ไฟล์ต้นฉบับ กันเบราว์เซอร์ค้าง
+  const POSTER_MAX_DATA_URL_LENGTH = 1900000; // เผื่อใต้ลิมิตฐานข้อมูล 2,000,000 ตัวอักษร
+
+  function loadImageFromFile(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("อ่านไฟล์รูปภาพไม่ได้")); };
+      img.src = url;
+    });
+  }
+
+  async function fileToCompressedDataUrl(file) {
+    if (!file.type.startsWith("image/")) throw new Error("กรุณาเลือกไฟล์รูปภาพเท่านั้น");
+    if (file.size > POSTER_MAX_SOURCE_BYTES) throw new Error("ไฟล์ใหญ่เกินไป (จำกัดไม่เกิน 20MB)");
+
+    const img = await loadImageFromFile(file);
+    const scale = Math.min(1, POSTER_MAX_DIMENSION / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    let quality = 0.85;
+    let dataUrl = canvas.toDataURL("image/jpeg", quality);
+    while (dataUrl.length > POSTER_MAX_DATA_URL_LENGTH && quality > 0.4) {
+      quality -= 0.15;
+      dataUrl = canvas.toDataURL("image/jpeg", quality);
+    }
+    if (dataUrl.length > POSTER_MAX_DATA_URL_LENGTH) throw new Error("บีบอัดรูปแล้วยังใหญ่เกินไป กรุณาเลือกรูปอื่น");
+    return dataUrl;
+  }
+
   // ---------- data ----------
   async function fetchAllResponses(activityId) {
     const pageSize = 1000;
@@ -580,7 +633,7 @@
     if (!db) return;
     try {
       const { data: activities, error: activitiesError } = await db.from("activities")
-        .select("id,name,created_at").order("created_at", { ascending: true });
+        .select("id,name,poster_image,created_at").order("created_at", { ascending: true });
       if (activitiesError) throw activitiesError;
       state.activities = activities;
 
@@ -1022,9 +1075,18 @@
     if (empty) return;
 
     state.activities.forEach((activity) => {
-      const card = el("article", "home-card pastel-card p-6");
-      card.appendChild(el("p", "label-sm", new Date(activity.created_at).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" })));
-      card.appendChild(el("h3", "display-font text-xl font-bold mt-1 break-words", activity.name));
+      const card = el("article", "home-card pastel-card");
+      if (activity.poster_image) {
+        const poster = document.createElement("img");
+        poster.className = "home-card-poster";
+        poster.src = activity.poster_image;
+        poster.alt = "";
+        card.appendChild(poster);
+      }
+
+      const body = el("div", "home-card-body");
+      body.appendChild(el("p", "label-sm", new Date(activity.created_at).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" })));
+      body.appendChild(el("h3", "display-font text-xl font-bold mt-1 break-words", activity.name));
 
       const actions = el("div", "mt-5 flex flex-wrap gap-2");
 
@@ -1044,7 +1106,8 @@
       presentButton.addEventListener("click", () => openPresentMode(activity.id));
 
       actions.append(viewButton, presentButton);
-      card.appendChild(actions);
+      body.appendChild(actions);
+      card.appendChild(body);
       holder.appendChild(card);
     });
   }
@@ -1073,7 +1136,17 @@
 
     $("present-overlay").classList.add("show");
     document.body.style.overflow = "hidden";
-    $("present-activity-name").textContent = activityName(state.activityId) || "กิจกรรม";
+    const activity = state.activities.find((a) => a.id === state.activityId);
+    $("present-activity-name").textContent = (activity && activity.name) || "กิจกรรม";
+
+    const posterImg = $("present-poster");
+    if (activity && activity.poster_image) {
+      if (posterImg.src !== activity.poster_image) posterImg.src = activity.poster_image;
+      posterImg.classList.remove("hidden");
+    } else {
+      posterImg.classList.add("hidden");
+      posterImg.removeAttribute("src");
+    }
 
     if (state.presentQrRenderedFor !== state.activityId) {
       const frame = $("present-qrcode");
@@ -1139,11 +1212,41 @@
       const active = activity.id === state.activityId;
       const row = el("div", `flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 ${active ? "border-[#efa3bd] bg-[#fff4f7]" : "border-white/80 bg-white/60"}`);
 
+      if (activity.poster_image) {
+        const thumb = document.createElement("img");
+        thumb.src = activity.poster_image;
+        thumb.alt = "";
+        thumb.className = "h-12 w-12 shrink-0 rounded-xl object-cover border border-white/80";
+        row.appendChild(thumb);
+      }
+
       const nameWrap = el("div", "flex-1 min-w-[10rem]");
       nameWrap.appendChild(el("span", "font-semibold", activity.name));
       row.appendChild(nameWrap);
 
       const actions = el("div", "shrink-0 flex flex-wrap gap-2");
+
+      const posterBtn = el("button", "rounded-full border border-[#dfd3e5] bg-white px-3 py-1.5 text-sm font-bold", activity.poster_image ? "เปลี่ยนรูป" : "เพิ่มรูป");
+      posterBtn.type = "button";
+      posterBtn.addEventListener("click", () => {
+        posterEditTargetId = activity.id;
+        posterEditInput.click();
+      });
+      actions.appendChild(posterBtn);
+
+      if (activity.poster_image) {
+        const removePosterBtn = el("button", "rounded-full border border-[#dfd3e5] bg-white px-3 py-1.5 text-sm font-bold", "ลบรูป");
+        removePosterBtn.type = "button";
+        removePosterBtn.addEventListener("click", async () => {
+          setLoading(removePosterBtn, true);
+          const { error } = await adminRpc("admin_set_activity_poster", { p_activity_id: activity.id, p_poster_image: null });
+          setLoading(removePosterBtn, false);
+          if (error) { if (error.code !== "42501") showToast(friendlyError(error, "ลบรูปไม่สำเร็จ")); return; }
+          showToast("ลบรูปกิจกรรมแล้ว");
+          loadAll();
+        });
+        actions.appendChild(removePosterBtn);
+      }
 
       const selectBtn = el("button", "rounded-full border border-[#dfd3e5] bg-white px-3 py-1.5 text-sm font-bold disabled:opacity-60", active ? "กำลังแก้ไข" : "เลือก");
       selectBtn.type = "button";
@@ -1552,6 +1655,35 @@
   });
 
   // ---------- admin: activities ----------
+  let pendingPosterDataUrl = null;
+
+  function resetActivityPosterPicker() {
+    pendingPosterDataUrl = null;
+    $("activity-poster-input").value = "";
+    $("activity-poster-preview").classList.add("hidden");
+    $("activity-poster-preview").removeAttribute("src");
+    $("activity-poster-clear").classList.add("hidden");
+    $("activity-poster-status").textContent = "";
+  }
+
+  $("activity-poster-input").addEventListener("change", async () => {
+    const file = $("activity-poster-input").files[0];
+    if (!file) return;
+    $("activity-poster-status").textContent = "กำลังเตรียมรูป...";
+    try {
+      pendingPosterDataUrl = await fileToCompressedDataUrl(file);
+      $("activity-poster-preview").src = pendingPosterDataUrl;
+      $("activity-poster-preview").classList.remove("hidden");
+      $("activity-poster-clear").classList.remove("hidden");
+      $("activity-poster-status").textContent = "พร้อมอัปโหลดพร้อมกับกิจกรรม";
+    } catch (error) {
+      resetActivityPosterPicker();
+      showToast(error.message || "เตรียมรูปไม่สำเร็จ");
+    }
+  });
+
+  $("activity-poster-clear").addEventListener("click", resetActivityPosterPicker);
+
   $("activity-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!db) return showToast(dbInitError || "ยังไม่ได้ตั้งค่า Supabase");
@@ -1559,17 +1691,42 @@
     if (!name) return;
     const button = event.currentTarget.querySelector("button[type=submit]");
     setLoading(button, true);
-    const { data, error } = await adminRpc("admin_create_activity", { p_name: name });
+    const { data, error } = await adminRpc("admin_create_activity", { p_name: name, p_poster_image: pendingPosterDataUrl });
     setLoading(button, false);
     if (error) {
       if (error.code !== "42501") showToast(friendlyError(error, "สร้างกิจกรรมไม่สำเร็จ"));
       return;
     }
     $("activity-name-input").value = "";
+    resetActivityPosterPicker();
     state.activityId = data;
     resetActivityScopedSelection();
     showToast("สร้างกิจกรรมแล้ว");
     loadAll();
+  });
+
+  // เปลี่ยน/ลบรูปของกิจกรรมที่มีอยู่แล้ว ใช้ input เดียวใช้ร่วมกันทุกแถว
+  let posterEditTargetId = null;
+  const posterEditInput = document.createElement("input");
+  posterEditInput.type = "file";
+  posterEditInput.accept = "image/*";
+  posterEditInput.className = "hidden";
+  document.body.appendChild(posterEditInput);
+
+  posterEditInput.addEventListener("change", async () => {
+    const file = posterEditInput.files[0];
+    const targetId = posterEditTargetId;
+    posterEditInput.value = "";
+    if (!file || !targetId) return;
+    try {
+      const dataUrl = await fileToCompressedDataUrl(file);
+      const { error } = await adminRpc("admin_set_activity_poster", { p_activity_id: targetId, p_poster_image: dataUrl });
+      if (error) { if (error.code !== "42501") showToast(friendlyError(error, "อัปโหลดรูปไม่สำเร็จ")); return; }
+      showToast("อัปเดตรูปกิจกรรมแล้ว");
+      loadAll();
+    } catch (error) {
+      showToast(error.message || "เตรียมรูปไม่สำเร็จ");
+    }
   });
 
   // ---------- admin: questions / scales / statuses (scoped to state.activityId) ----------
