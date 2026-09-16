@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="version" content="1.4.0">
+  <meta name="version" content="2.0.0">
   <title>ระบบประเมินกิจกรรม</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
@@ -18,7 +18,7 @@
     }
     * { box-sizing: border-box; }
     body { margin: 0; color: var(--ink); background: #fbf8fc; font-family: "DM Sans", "Noto Sans Thai", system-ui, sans-serif; }
-    button, input { font: inherit; }
+    button, input, select, textarea { font: inherit; }
     button { cursor: pointer; }
     .app-shell {
       min-height: 100vh;
@@ -42,6 +42,11 @@
 
     .nav-tab { color: var(--muted); border-bottom: 3px solid transparent; transition: color .2s, border-color .2s; }
     .nav-tab:hover, .nav-tab.active { color: var(--ink); border-color: var(--rose); }
+
+    .mobile-nav-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: .35rem .9rem; border-radius: 16px; color: var(--muted); font-size: .68rem; font-weight: 700; transition: color .2s, background .2s; }
+    .mobile-nav-tab.active { color: var(--ink); background: #ffdce8; }
+    #mobile-nav { padding-bottom: calc(.5rem + env(safe-area-inset-bottom)); }
+    body.participant-mode #mobile-nav { display: none; }
 
     body.participant-mode .app-shell > header,
     body.participant-mode #question-summary-panel { display: none; }
@@ -67,11 +72,6 @@
     .toast.show { opacity: 1; transform: translateY(0); }
 
     button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid rgba(217,162,190,.65); outline-offset: 3px; }
-
-    .mobile-nav-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: .35rem .9rem; border-radius: 16px; color: var(--muted); font-size: .68rem; font-weight: 700; transition: color .2s, background .2s; }
-    .mobile-nav-tab.active { color: var(--ink); background: #ffdce8; }
-    #mobile-nav { padding-bottom: calc(.5rem + env(safe-area-inset-bottom)); }
-    body.participant-mode #mobile-nav { display: none; }
     @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   </style>
@@ -83,6 +83,10 @@
       <div>
         <p class="label-sm">แบบประเมินหลังกิจกรรม</p>
         <h1 id="activity-title" class="display-font text-3xl md:text-4xl font-bold leading-tight mt-1">ระบบประเมินกิจกรรม</h1>
+        <div id="activity-picker" class="hidden mt-2 items-center gap-2">
+          <label class="sr-only" for="activity-select">เลือกกิจกรรม</label>
+          <select id="activity-select" class="rounded-full border border-[#dfd3e5] bg-white/80 px-3 py-1.5 text-sm font-semibold outline-none"></select>
+        </div>
       </div>
       <div class="flex items-center gap-6">
         <nav aria-label="เมนูหลัก" class="hidden md:flex gap-6 text-sm font-bold">
@@ -103,7 +107,13 @@
 
     <!-- ================= DASHBOARD ================= -->
     <section id="dashboard-view" class="view-panel active" aria-label="สรุปผลการประเมิน">
-      <div class="grid gap-6 lg:grid-cols-[1.08fr_1fr]">
+      <div id="dashboard-empty" class="hidden pastel-card p-8 text-center mb-6">
+        <i data-lucide="calendar-plus" class="w-10 h-10 mx-auto text-[#d98aa8]"></i>
+        <h3 class="display-font text-2xl font-bold mt-3">ยังไม่มีกิจกรรม</h3>
+        <p class="mt-2 text-[#7f758c]">กดไอคอนเฟืองมุมขวาบน (กด 5 ครั้ง) เพื่อเข้าหน้าตั้งค่าและสร้างกิจกรรมแรกของคุณ</p>
+      </div>
+
+      <div id="dashboard-content" class="grid gap-6 lg:grid-cols-[1.08fr_1fr]">
         <article class="pastel-card p-6 sm:p-7">
           <p class="label-sm">สแกนเพื่อประเมิน</p>
           <h2 class="display-font text-2xl font-bold mt-1">QR Code สำหรับผู้เข้าร่วม</h2>
@@ -137,7 +147,7 @@
               <div id="scale-legend" class="w-full max-w-[240px] space-y-3" aria-live="polite"></div>
             </div>
             <p class="pt-5 border-t border-[#eadfeb] text-sm leading-relaxed text-[#7f758c]">
-              เปอร์เซ็นต์คำนวณจากคะแนนเฉลี่ยทุกข้อ เทียบกับระดับคะแนนสูงสุดที่ตั้งไว้
+              คำนวณเฉพาะคำถามแบบ “ระดับความคิดเห็น” เทียบกับคะแนนสูงสุดที่ตั้งไว้
             </p>
           </aside>
 
@@ -154,35 +164,43 @@
 
     <!-- ================= FORM ================= -->
     <section id="form-view" class="view-panel gap-7 lg:grid-cols-[1.12fr_.88fr]" aria-label="ทำแบบประเมิน">
-      <section>
-        <div class="mb-4">
-          <p class="label-sm">ความคิดเห็นของคุณ</p>
-          <h2 id="form-activity-title" class="display-font text-2xl md:text-3xl font-bold mt-1">แบบประเมินกิจกรรม</h2>
-        </div>
+      <div id="form-activity-missing" class="hidden pastel-card p-8 text-center lg:col-span-2">
+        <i data-lucide="link-2-off" class="w-10 h-10 mx-auto text-[#d98aa8]"></i>
+        <h3 class="display-font text-2xl font-bold mt-3">ไม่พบแบบประเมินนี้</h3>
+        <p class="mt-2 text-[#7f758c]">ลิงก์นี้อาจไม่ถูกต้องหรือกิจกรรมถูกลบไปแล้ว กรุณาขอลิงก์ใหม่จากผู้จัดกิจกรรม</p>
+      </div>
 
-        <div id="thank-you" class="hidden pastel-card p-8 text-center">
-          <i data-lucide="heart-handshake" class="w-10 h-10 mx-auto text-[#d98aa8]"></i>
-          <h3 class="display-font text-2xl font-bold mt-3">ขอบคุณสำหรับความคิดเห็น</h3>
-          <p class="mt-2 text-[#7f758c]">บันทึกคำตอบของคุณเรียบร้อยแล้ว</p>
-          <button id="answer-again" type="button" class="btn-soft mt-6 rounded-full px-5 py-3 font-bold">ตอบแบบประเมินอีกครั้ง</button>
-        </div>
+      <div id="form-content" class="contents">
+        <section>
+          <div class="mb-4">
+            <p class="label-sm">ความคิดเห็นของคุณ</p>
+            <h2 id="form-activity-title" class="display-font text-2xl md:text-3xl font-bold mt-1">แบบประเมินกิจกรรม</h2>
+          </div>
 
-        <form id="response-form" class="space-y-4" novalidate>
-          <article id="status-picker" class="hidden question-card rounded-3xl border border-[#e8ddea] bg-[#fffdfd] p-5">
-            <p class="font-bold">สถานะของคุณ</p>
-            <div id="status-options" class="flex flex-wrap gap-2 mt-4" role="group" aria-label="สถานะของคุณ"></div>
-          </article>
-          <div id="response-questions" class="space-y-4"></div>
-          <p id="response-message" class="min-h-5 text-sm font-semibold" aria-live="polite"></p>
-          <button id="submit-response" type="submit" class="btn-primary w-full rounded-full px-5 py-4 font-bold transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" disabled>ส่งแบบประเมิน</button>
-        </form>
-      </section>
+          <div id="thank-you" class="hidden pastel-card p-8 text-center">
+            <i data-lucide="heart-handshake" class="w-10 h-10 mx-auto text-[#d98aa8]"></i>
+            <h3 class="display-font text-2xl font-bold mt-3">ขอบคุณสำหรับความคิดเห็น</h3>
+            <p class="mt-2 text-[#7f758c]">บันทึกคำตอบของคุณเรียบร้อยแล้ว</p>
+            <button id="answer-again" type="button" class="btn-soft mt-6 rounded-full px-5 py-3 font-bold">ตอบแบบประเมินอีกครั้ง</button>
+          </div>
 
-      <aside id="question-summary-panel" class="pastel-card p-6 self-start">
-        <p class="label-sm">ผลรายข้อ</p>
-        <h2 class="display-font text-2xl font-bold mt-1">คะแนนแต่ละหัวข้อ</h2>
-        <div id="question-summary" class="mt-6 space-y-5" aria-live="polite"></div>
-      </aside>
+          <form id="response-form" class="space-y-4" novalidate>
+            <article id="status-picker" class="hidden question-card rounded-3xl border border-[#e8ddea] bg-[#fffdfd] p-5">
+              <p class="font-bold">สถานะของคุณ</p>
+              <div id="status-options" class="flex flex-wrap gap-2 mt-4" role="group" aria-label="สถานะของคุณ"></div>
+            </article>
+            <div id="response-questions" class="space-y-4"></div>
+            <p id="response-message" class="min-h-5 text-sm font-semibold" aria-live="polite"></p>
+            <button id="submit-response" type="submit" class="btn-primary w-full rounded-full px-5 py-4 font-bold transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" disabled>ส่งแบบประเมิน</button>
+          </form>
+        </section>
+
+        <aside id="question-summary-panel" class="pastel-card p-6 self-start">
+          <p class="label-sm">ผลรายข้อ</p>
+          <h2 class="display-font text-2xl font-bold mt-1">คะแนนแต่ละหัวข้อ</h2>
+          <div id="question-summary" class="mt-6 space-y-5" aria-live="polite"></div>
+        </aside>
+      </div>
     </section>
 
     <!-- ================= ADMIN ================= -->
@@ -191,7 +209,7 @@
         <div>
           <p class="label-sm">สำหรับผู้ดูแล</p>
           <h2 class="display-font text-3xl font-bold mt-1">ตั้งค่าแบบประเมิน</h2>
-          <p class="mt-2 max-w-2xl leading-relaxed text-[#7f758c]">เพิ่มหรือลบคำถาม ระดับคะแนน และสถานะผู้ตอบ การเปลี่ยนแปลงจะแสดงให้ผู้เข้าร่วมเห็นทันที</p>
+          <p class="mt-2 max-w-2xl leading-relaxed text-[#7f758c]">สร้างกิจกรรม แล้วออกแบบคำถามของกิจกรรมนั้น การเปลี่ยนแปลงจะแสดงให้ผู้เข้าร่วมเห็นทันที</p>
         </div>
         <div id="admin-session" class="hidden items-center gap-3 text-sm">
           <span id="admin-user" class="font-semibold"></span>
@@ -212,22 +230,21 @@
 
       <div id="admin-content" class="hidden">
         <section class="pastel-card mb-6 p-6 sm:p-7">
-          <h3 class="display-font text-xl font-bold">ชื่อกิจกรรม</h3>
-          <p class="mt-1 text-sm text-[#7f758c]">แสดงเป็นหัวข้อหลักของเว็บและแบบฟอร์ม</p>
-          <form id="activity-name-form" class="mt-4 flex flex-col gap-3 sm:flex-row">
-            <label class="sr-only" for="activity-name-input">ชื่อกิจกรรม</label>
-            <input id="activity-name-input" type="text" maxlength="200" required class="min-w-0 flex-1 rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
-            <button type="submit" class="btn-primary rounded-full px-5 py-3 font-bold disabled:opacity-60">บันทึกชื่อ</button>
+          <h3 class="display-font text-xl font-bold">จัดการกิจกรรม</h3>
+          <p class="mt-1 text-sm text-[#7f758c]">สร้างกิจกรรมใหม่ แล้วกด “เลือก” เพื่อออกแบบคำถามของกิจกรรมนั้น</p>
+          <form id="activity-form" class="mt-4 flex flex-col gap-3 sm:flex-row">
+            <label class="sr-only" for="activity-name-input">ชื่อกิจกรรมใหม่</label>
+            <input id="activity-name-input" type="text" maxlength="200" required placeholder="ชื่อกิจกรรมใหม่" class="min-w-0 flex-1 rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
+            <button type="submit" class="btn-primary rounded-full px-5 py-3 font-bold disabled:opacity-60">สร้างกิจกรรม</button>
           </form>
+          <div id="admin-activity-list" class="mt-6 space-y-3"></div>
         </section>
 
-        <section class="pastel-card mb-6 p-6 sm:p-7">
-          <h3 class="display-font text-xl font-bold">ตัวอย่างแบบฟอร์ม</h3>
-          <p class="mt-1 text-sm text-[#7f758c]">หน้าตาที่ผู้เข้าร่วมจะเห็น</p>
-          <div id="admin-preview-questions" class="mt-5 space-y-4"></div>
-        </section>
+        <div id="activity-required-notice" class="hidden pastel-card p-6 mb-6 text-sm text-[#7f758c]">
+          สร้างหรือเลือกกิจกรรมด้านบนก่อน จึงจะเพิ่มคำถาม ระดับคะแนน และสถานะได้
+        </div>
 
-        <div class="grid gap-6 lg:grid-cols-2">
+        <div id="activity-scoped-sections" class="hidden grid gap-6 lg:grid-cols-2">
           <section class="pastel-card p-6">
             <h3 class="display-font text-xl font-bold">หัวข้อคำถาม</h3>
             <form id="question-form" class="mt-5 space-y-4">
@@ -245,10 +262,7 @@
               </div>
               <div id="question-options-field" class="hidden">
                 <label class="block font-bold mb-2" for="question-options">ตัวเลือก (บรรทัดละ 1 ตัวเลือก อย่างน้อย 2 ตัวเลือก)</label>
-                <textarea id="question-options" rows="4" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none" placeholder="เช่น
-อาหาร
-สถานที่
-วิทยากร"></textarea>
+                <textarea id="question-options" rows="4" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none"></textarea>
               </div>
               <button type="submit" class="btn-primary rounded-full px-5 py-3 font-bold disabled:opacity-60">เพิ่มคำถาม</button>
             </form>
@@ -257,6 +271,7 @@
 
           <section class="pastel-card p-6">
             <h3 class="display-font text-xl font-bold">ระดับคะแนน</h3>
+            <p class="mt-1 text-sm text-[#7f758c]">ใช้กับคำถามแบบ “ระดับความคิดเห็น” ของกิจกรรมนี้</p>
             <form id="scale-form" class="mt-5 grid gap-4 sm:grid-cols-[1fr_120px]">
               <div>
                 <label class="block font-bold mb-2" for="scale-label">ชื่อระดับ</label>
@@ -273,6 +288,7 @@
 
           <section class="pastel-card p-6">
             <h3 class="display-font text-xl font-bold">สถานะผู้ตอบ</h3>
+            <p class="mt-1 text-sm text-[#7f758c]">ของกิจกรรมนี้ เช่น เข้าร่วม / ไม่เข้าร่วม</p>
             <form id="status-form" class="mt-5 flex gap-3">
               <label class="sr-only" for="status-text">สถานะใหม่</label>
               <input id="status-text" type="text" maxlength="100" required placeholder="เช่น เข้าร่วม" class="min-w-0 flex-1 rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
@@ -280,20 +296,20 @@
             </form>
             <div id="admin-status-list" class="mt-6 space-y-3"></div>
           </section>
-
-          <section class="pastel-card p-6">
-            <h3 class="display-font text-xl font-bold">เปลี่ยนรหัสผ่านผู้ดูแล</h3>
-            <form id="password-form" class="mt-5 space-y-3">
-              <label class="block text-sm font-bold" for="current-password">รหัสผ่านปัจจุบัน</label>
-              <input id="current-password" type="password" autocomplete="current-password" required class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
-              <label class="block text-sm font-bold" for="new-password">รหัสผ่านใหม่ (อย่างน้อย 8 ตัว)</label>
-              <input id="new-password" type="password" autocomplete="new-password" minlength="8" required class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
-              <label class="block text-sm font-bold" for="confirm-password">ยืนยันรหัสผ่านใหม่</label>
-              <input id="confirm-password" type="password" autocomplete="new-password" minlength="8" required class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
-              <button type="submit" class="btn-primary rounded-full px-5 py-3 font-bold disabled:opacity-60">เปลี่ยนรหัสผ่าน</button>
-            </form>
-          </section>
         </div>
+
+        <section class="pastel-card p-6 mt-6 max-w-md">
+          <h3 class="display-font text-xl font-bold">เปลี่ยนรหัสผ่านผู้ดูแล</h3>
+          <form id="password-form" class="mt-5 space-y-3">
+            <label class="block text-sm font-bold" for="current-password">รหัสผ่านปัจจุบัน</label>
+            <input id="current-password" type="password" autocomplete="current-password" required class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
+            <label class="block text-sm font-bold" for="new-password">รหัสผ่านใหม่ (อย่างน้อย 8 ตัว)</label>
+            <input id="new-password" type="password" autocomplete="new-password" minlength="8" required class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
+            <label class="block text-sm font-bold" for="confirm-password">ยืนยันรหัสผ่านใหม่</label>
+            <input id="confirm-password" type="password" autocomplete="new-password" minlength="8" required class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
+            <button type="submit" class="btn-primary rounded-full px-5 py-3 font-bold disabled:opacity-60">เปลี่ยนรหัสผ่าน</button>
+          </form>
+        </section>
       </div>
     </section>
   </main>
@@ -310,7 +326,7 @@
   </nav>
 
   <footer class="max-w-7xl mx-auto px-5 pb-8 md:px-8 text-center text-xs text-[#9a90a6]">
-    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 1.4.0</span>
+    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.0.0</span>
     <span id="db-status" class="ml-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 font-semibold">กำลังตรวจการเชื่อมต่อ...</span>
   </footer>
 
@@ -319,7 +335,7 @@
 
 <script>
   // ============ เวอร์ชัน (แก้ทุกครั้งที่อัปเดต และบันทึกใน CHANGELOG.md) ============
-  const APP_VERSION = "1.4.0";
+  const APP_VERSION = "2.0.0";
   const APP_UPDATED = "2026-09-16";
 
   // ============ ตั้งค่า Supabase (Project Settings → API) ============
@@ -347,16 +363,19 @@
     badge.style.color = ok ? "#438b69" : "#b84e6b";
   }
 
-  const state = {
-    questions: [], scales: [], statuses: [], responses: [],
-    selected: {}, selectedStatus: "", statusFilter: "all",
-    isAdmin: false, loaded: false, activityName: "กิจกรรมของคุณ"
-  };
-
   const QUESTION_TYPE_LABELS = { scale: "ระดับความคิดเห็น", choice: "ติ๊กเลือก", text: "พิมพ์ข้อความ" };
 
+  const state = {
+    activities: [], activityId: null, formActivityId: null,
+    questions: [], scales: [], statuses: [], responses: [],
+    selected: {}, selectedStatus: "", statusFilter: "all",
+    isAdmin: false, loaded: false
+  };
+
   const $ = (id) => document.getElementById(id);
-  const participantMode = new URLSearchParams(location.search).get("view") === "form";
+  const urlParams = new URLSearchParams(location.search);
+  const participantMode = urlParams.get("view") === "form";
+  const urlActivityId = urlParams.get("activity") || null;
   if (participantMode) document.body.classList.add("participant-mode");
 
   // ---------- helpers ----------
@@ -381,20 +400,28 @@
     button.setAttribute("aria-busy", String(loading));
   }
 
-  function participantUrl() {
+  function participantUrl(activityId) {
     const url = new URL(location.href);
     url.search = ""; url.hash = "";
     url.searchParams.set("view", "form");
+    if (activityId) url.searchParams.set("activity", activityId);
     return url.toString();
   }
 
+  function activityName(id) {
+    return state.activities.find((a) => a.id === id)?.name || "";
+  }
+
   function applyActivityName() {
-    const name = state.activityName || "กิจกรรมของคุณ";
-    $("activity-title").textContent = name;
-    $("form-activity-title").textContent = name;
-    document.title = `${name} · ระบบประเมินกิจกรรม`;
-    const input = $("activity-name-input");
-    if (input && document.activeElement !== input) input.value = name;
+    if (participantMode) {
+      const name = activityName(state.formActivityId) || "แบบประเมินกิจกรรม";
+      $("form-activity-title").textContent = name;
+      document.title = `${name} · ระบบประเมินกิจกรรม`;
+    } else {
+      const name = activityName(state.activityId) || "ระบบประเมินกิจกรรม";
+      $("activity-title").textContent = name;
+      document.title = `${name} · ระบบประเมินกิจกรรม`;
+    }
   }
 
   const avg = (values) => values.length ? values.reduce((s, v) => s + v, 0) / values.length : 0;
@@ -414,11 +441,18 @@
       .filter((v) => Number.isFinite(v) && v > 0);
   }
 
+  function isAnswered(question) {
+    const value = state.selected[question.id];
+    if (question.question_type === "choice") return Array.isArray(value) && value.length > 0;
+    if (question.question_type === "text") return typeof value === "string" && value.trim().length > 0;
+    return typeof value === "number" && value > 0;
+  }
+
   function friendlyError(error, fallback) {
     if (!error) return fallback;
     if (error.code === "23505") return "มีข้อมูลนี้อยู่แล้ว";
     if (error.code === "42501") return "ไม่มีสิทธิ์ทำรายการนี้ กรุณาเข้าสู่ระบบผู้ดูแล";
-    if (error.code === "PGRST202") return "ฐานข้อมูลยังไม่มีฟังก์ชันล็อกอิน กรุณารัน schema.sql เวอร์ชันล่าสุด";
+    if (error.code === "PGRST202") return "ฐานข้อมูลยังไม่มีฟังก์ชันนี้ กรุณารัน schema.sql เวอร์ชันล่าสุด";
     if (error.code === "PGRST205" || error.code === "42P01") return "ฐานข้อมูลยังไม่มีตาราง กรุณารัน schema.sql";
     if (/invalid api key|jwt|apikey/i.test(error.message || "")) return "คีย์ Supabase ไม่ถูกต้อง";
     if (/failed to fetch|network/i.test(error.message || "")) return "เชื่อมต่อ Supabase ไม่ได้ (ตรวจอินเทอร์เน็ต)";
@@ -426,12 +460,13 @@
   }
 
   // ---------- data ----------
-  async function fetchAllResponses() {
+  async function fetchAllResponses(activityId) {
     const pageSize = 1000;
     const rows = [];
     for (let from = 0; ; from += pageSize) {
       const { data, error } = await db.from("responses")
         .select("id,status_label,answers,created_at")
+        .eq("activity_id", activityId)
         .order("created_at", { ascending: true })
         .range(from, from + pageSize - 1);
       if (error) throw error;
@@ -444,26 +479,41 @@
   async function loadAll() {
     if (!db) return;
     try {
-      const [q, s, st, cfg] = await Promise.all([
-        db.from("questions").select("id,question_text,sort_order,question_type,options,created_at").order("sort_order").order("created_at"),
-        db.from("scales").select("id,scale_label,rating").order("rating"),
-        db.from("statuses").select("id,label,created_at").order("created_at"),
-        db.from("settings").select("activity_name").eq("id", true).maybeSingle()
-      ]);
-      for (const res of [q, s, st, cfg]) if (res.error) throw res.error;
+      const { data: activities, error: activitiesError } = await db.from("activities")
+        .select("id,name,created_at").order("created_at", { ascending: true });
+      if (activitiesError) throw activitiesError;
+      state.activities = activities;
 
-      state.questions = q.data;
-      state.scales = s.data.map((x) => ({ ...x, rating: Number(x.rating) }));
-      state.statuses = st.data;
-      state.activityName = cfg.data?.activity_name || "กิจกรรมของคุณ";
-      state.responses = participantMode ? [] : await fetchAllResponses();
+      if (participantMode) {
+        state.formActivityId = urlActivityId;
+      } else if (!state.activityId || !activities.some((a) => a.id === state.activityId)) {
+        state.activityId = activities.length ? activities[activities.length - 1].id : null;
+      }
 
-      // ล้างค่าที่เลือกไว้ของคำถาม/สถานะที่ถูกลบไปแล้ว
-      const questionIds = new Set(state.questions.map((x) => x.id));
-      Object.keys(state.selected).forEach((k) => { if (!questionIds.has(k)) delete state.selected[k]; });
-      const statusLabels = new Set(state.statuses.map((x) => x.label));
-      if (state.selectedStatus && !statusLabels.has(state.selectedStatus)) state.selectedStatus = "";
-      if (state.statusFilter !== "all" && !statusLabels.has(state.statusFilter)) state.statusFilter = "all";
+      const activeId = participantMode ? state.formActivityId : state.activityId;
+      const activeIsValid = activeId && activities.some((a) => a.id === activeId);
+
+      if (!activeIsValid) {
+        state.questions = []; state.scales = []; state.statuses = []; state.responses = [];
+      } else {
+        const [q, s, st] = await Promise.all([
+          db.from("questions").select("id,question_text,sort_order,question_type,options,created_at").eq("activity_id", activeId).order("sort_order").order("created_at"),
+          db.from("scales").select("id,scale_label,rating").eq("activity_id", activeId).order("rating"),
+          db.from("statuses").select("id,label,created_at").eq("activity_id", activeId).order("created_at")
+        ]);
+        for (const res of [q, s, st]) if (res.error) throw res.error;
+
+        state.questions = q.data;
+        state.scales = s.data.map((x) => ({ ...x, rating: Number(x.rating) }));
+        state.statuses = st.data;
+        state.responses = participantMode ? [] : await fetchAllResponses(activeId);
+
+        const questionIds = new Set(state.questions.map((x) => x.id));
+        Object.keys(state.selected).forEach((k) => { if (!questionIds.has(k)) delete state.selected[k]; });
+        const statusLabels = new Set(state.statuses.map((x) => x.label));
+        if (state.selectedStatus && !statusLabels.has(state.selectedStatus)) state.selectedStatus = "";
+        if (state.statusFilter !== "all" && !statusLabels.has(state.statusFilter)) state.statusFilter = "all";
+      }
 
       state.loaded = true;
       setDbStatus(true, "เชื่อมต่อฐานข้อมูลแล้ว");
@@ -485,19 +535,39 @@
 
   function subscribeRealtime() {
     const tables = participantMode
-      ? ["questions", "scales", "statuses", "settings"]
-      : ["questions", "scales", "statuses", "responses", "settings"];
+      ? ["activities", "questions", "scales", "statuses"]
+      : ["activities", "questions", "scales", "statuses", "responses"];
     const channel = db.channel("evaluation-live");
     tables.forEach((table) => channel.on("postgres_changes", { event: "*", schema: "public", table }, scheduleReload));
     channel.subscribe();
   }
 
-  // ---------- render ----------
+  // ---------- render: shared pieces ----------
   function renderQrCode() {
     const qr = $("qrcode");
     qr.replaceChildren();
-    if (typeof QRCode === "undefined") return;
-    new QRCode(qr, { text: participantUrl(), width: 220, height: 220, colorDark: "#4a4258", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+    if (!state.activityId || typeof QRCode === "undefined") return;
+    new QRCode(qr, { text: participantUrl(state.activityId), width: 220, height: 220, colorDark: "#4a4258", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+  }
+
+  function renderActivityPicker() {
+    const wrap = $("activity-picker");
+    if (participantMode || !state.activities.length) {
+      wrap.classList.add("hidden");
+      wrap.classList.remove("flex");
+      return;
+    }
+    wrap.classList.remove("hidden");
+    wrap.classList.add("flex");
+    const select = $("activity-select");
+    select.replaceChildren();
+    state.activities.forEach((activity) => {
+      const option = document.createElement("option");
+      option.value = activity.id;
+      option.textContent = activity.name;
+      if (activity.id === state.activityId) option.selected = true;
+      select.appendChild(option);
+    });
   }
 
   function choiceButton(text, selected, onClick) {
@@ -531,11 +601,12 @@
     return button;
   }
 
-  function isAnswered(question) {
-    const value = state.selected[question.id];
-    if (question.question_type === "choice") return Array.isArray(value) && value.length > 0;
-    if (question.question_type === "text") return typeof value === "string" && value.trim().length > 0;
-    return typeof value === "number" && value > 0;
+  // ---------- render: participant form ----------
+  function renderFormAvailability() {
+    if (!participantMode) return;
+    const valid = !state.loaded || (state.formActivityId && state.activities.some((a) => a.id === state.formActivityId));
+    $("form-activity-missing").classList.toggle("hidden", valid);
+    $("form-content").classList.toggle("hidden", !valid);
   }
 
   function renderStatusPicker() {
@@ -608,6 +679,7 @@
     });
   }
 
+  // ---------- render: dashboard analytics ----------
   function renderStatusFilters() {
     const holder = $("status-filters");
     holder.replaceChildren();
@@ -712,6 +784,8 @@
     const hasScaleQuestion = state.questions.some((q) => q.question_type === "scale");
     if (!db) {
       insight.textContent = "ตั้งค่าการเชื่อมต่อ Supabase ก่อนเริ่มใช้งาน";
+    } else if (!state.activityId) {
+      insight.textContent = "สร้างกิจกรรมในหน้าตั้งค่าเพื่อเริ่มต้น";
     } else if (!state.questions.length || (hasScaleQuestion && !state.scales.length)) {
       insight.textContent = "เปิดหน้าตั้งค่า แล้วเพิ่มคำถามและระดับคะแนนเพื่อเริ่มรับคำตอบ";
     } else if (!responses.length) {
@@ -725,31 +799,106 @@
     }
   }
 
-  function renderAdminPreview() {
-    const holder = $("admin-preview-questions");
+  function renderDashboardEmpty() {
+    const empty = !participantMode && state.loaded && !state.activities.length;
+    $("dashboard-empty").classList.toggle("hidden", !empty);
+    $("dashboard-content").classList.toggle("hidden", empty);
+  }
+
+  // ---------- render: admin lists ----------
+  function buildDeleteControls(table, id, onDeleted) {
+    const start = el("button", "rounded-full border border-[#ebc2d1] bg-[#fff4f7] px-3 py-1.5 text-sm font-bold", "ลบ");
+    const yes = el("button", "hidden rounded-full bg-[#b84e6b] text-white px-3 py-1.5 text-xs font-bold disabled:opacity-60", "ยืนยันลบ");
+    const no = el("button", "hidden rounded-full bg-white px-3 py-1.5 text-xs font-bold", "ยกเลิก");
+    [start, yes, no].forEach((b) => (b.type = "button"));
+
+    const toggle = (confirming) => {
+      start.classList.toggle("hidden", confirming);
+      yes.classList.toggle("hidden", !confirming);
+      no.classList.toggle("hidden", !confirming);
+    };
+    start.addEventListener("click", () => toggle(true));
+    no.addEventListener("click", () => toggle(false));
+    yes.addEventListener("click", async () => {
+      setLoading(yes, true);
+      const { data, error } = await adminRpc("admin_delete", { p_table: table, p_id: id });
+      setLoading(yes, false);
+      if (error || !data) {
+        if (error?.code !== "42501") showToast(friendlyError(error, "ลบไม่สำเร็จ"));
+        toggle(false);
+        return;
+      }
+      showToast("ลบรายการแล้ว");
+      if (onDeleted) onDeleted();
+      loadAll();
+    });
+
+    return [start, yes, no];
+  }
+
+  function renderActivityAdminList() {
+    const holder = $("admin-activity-list");
     holder.replaceChildren();
-    if (!state.questions.length) {
-      holder.appendChild(el("p", "rounded-3xl border border-dashed border-[#d6c7de] bg-white/45 p-6 text-sm text-[#7f758c]", "เพิ่มคำถามเพื่อดูตัวอย่างแบบฟอร์ม"));
+    if (!state.activities.length) {
+      holder.appendChild(el("p", "text-sm text-[#7f758c]", "ยังไม่มีกิจกรรม สร้างกิจกรรมแรกด้านบน"));
       return;
     }
-    const hasScaleQuestion = state.questions.some((q) => q.question_type === "scale");
-    if (hasScaleQuestion && !state.scales.length) {
-      holder.appendChild(el("p", "rounded-3xl border border-dashed border-[#d6c7de] bg-white/45 p-4 text-sm text-[#7f758c]", "เพิ่มระดับคะแนนเพื่อดูตัวอย่างของคำถามแบบระดับความคิดเห็น"));
-    }
-    const scales = scalesAsc();
-    state.questions.forEach((question, index) => {
-      const card = el("article", "question-card rounded-3xl border border-[#e8ddea] bg-[#fffdfd] p-5");
-      card.appendChild(el("p", "font-bold", `${index + 1}. ${question.question_text}`));
-      const options = el("div", "flex flex-wrap gap-2 mt-4");
-      if (question.question_type === "choice") {
-        (question.options || []).forEach((label) => options.appendChild(el("span", "choice rounded-full px-4 py-2 text-sm font-bold", label)));
-      } else if (question.question_type === "text") {
-        options.appendChild(el("div", "w-full rounded-2xl border border-dashed border-[#e2d7e8] bg-white/60 px-4 py-3 text-sm text-[#9a90a6]", "ช่องให้พิมพ์ข้อความ"));
-      } else {
-        scales.forEach((s) => options.appendChild(el("span", "choice rounded-full px-4 py-2 text-sm font-bold", `${s.rating} · ${s.scale_label}`)));
-      }
-      card.appendChild(options);
-      holder.appendChild(card);
+
+    state.activities.forEach((activity) => {
+      const active = activity.id === state.activityId;
+      const row = el("div", `flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 ${active ? "border-[#efa3bd] bg-[#fff4f7]" : "border-white/80 bg-white/60"}`);
+
+      const nameWrap = el("div", "flex-1 min-w-[10rem]");
+      nameWrap.appendChild(el("span", "font-semibold", activity.name));
+      row.appendChild(nameWrap);
+
+      const actions = el("div", "shrink-0 flex flex-wrap gap-2");
+
+      const selectBtn = el("button", "rounded-full border border-[#dfd3e5] bg-white px-3 py-1.5 text-sm font-bold disabled:opacity-60", active ? "กำลังแก้ไข" : "เลือก");
+      selectBtn.type = "button";
+      selectBtn.disabled = active;
+      selectBtn.addEventListener("click", () => {
+        state.activityId = activity.id;
+        state.selected = {}; state.selectedStatus = ""; state.statusFilter = "all";
+        loadAll();
+      });
+
+      const renameBtn = el("button", "rounded-full border border-[#dfd3e5] bg-white px-3 py-1.5 text-sm font-bold", "แก้ไขชื่อ");
+      renameBtn.type = "button";
+      renameBtn.addEventListener("click", () => {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = activity.name;
+        input.maxLength = 200;
+        input.className = "w-full rounded-xl border border-[#dfd3e5] bg-white px-3 py-1.5 outline-none";
+        nameWrap.replaceChildren(input);
+        input.focus();
+        input.select();
+        let done = false;
+        const save = async () => {
+          if (done) return;
+          done = true;
+          const name = input.value.trim();
+          if (!name || name === activity.name) { renderActivityAdminList(); return; }
+          const { error } = await adminRpc("admin_rename_activity", { p_activity_id: activity.id, p_name: name });
+          if (error) { if (error.code !== "42501") showToast(friendlyError(error, "เปลี่ยนชื่อไม่สำเร็จ")); }
+          else showToast("เปลี่ยนชื่อกิจกรรมแล้ว");
+          loadAll();
+        };
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") save();
+          if (event.key === "Escape") { done = true; renderActivityAdminList(); }
+        });
+        input.addEventListener("blur", save);
+      });
+
+      const del = buildDeleteControls("activities", activity.id, () => {
+        if (state.activityId === activity.id) state.activityId = null;
+      });
+
+      actions.append(selectBtn, renameBtn, ...del);
+      row.appendChild(actions);
+      holder.appendChild(row);
     });
   }
 
@@ -763,45 +912,30 @@
     records.forEach((record) => {
       const row = el("div", "flex items-center justify-between gap-3 rounded-2xl border border-white/80 bg-white/60 px-4 py-3");
       row.appendChild(el("span", "font-semibold", labelFor(record)));
-
       const actions = el("div", "shrink-0 flex gap-2");
-      const start = el("button", "rounded-full border border-[#ebc2d1] bg-[#fff4f7] px-3 py-1.5 text-sm font-bold", "ลบ");
-      const yes = el("button", "hidden rounded-full bg-[#b84e6b] text-white px-3 py-1.5 text-xs font-bold disabled:opacity-60", "ยืนยันลบ");
-      const no = el("button", "hidden rounded-full bg-white px-3 py-1.5 text-xs font-bold", "ยกเลิก");
-      [start, yes, no].forEach((b) => (b.type = "button"));
-
-      const toggle = (confirming) => {
-        start.classList.toggle("hidden", confirming);
-        yes.classList.toggle("hidden", !confirming);
-        no.classList.toggle("hidden", !confirming);
-      };
-      start.addEventListener("click", () => toggle(true));
-      no.addEventListener("click", () => toggle(false));
-      yes.addEventListener("click", async () => {
-        setLoading(yes, true);
-        const { data, error } = await adminRpc("admin_delete", { p_table: table, p_id: record.id });
-        setLoading(yes, false);
-        if (error || !data) {
-          if (error?.code !== "42501") showToast(friendlyError(error, "ลบไม่สำเร็จ"));
-          toggle(false);
-          return;
-        }
-        showToast("ลบรายการแล้ว");
-        loadAll();
-      });
-
-      actions.append(start, yes, no);
+      actions.append(...buildDeleteControls(table, record.id));
       row.appendChild(actions);
       holder.appendChild(row);
     });
   }
 
+  function renderActivityScopedUi() {
+    const hasActivity = !!state.activityId;
+    $("activity-required-notice").classList.toggle("hidden", hasActivity);
+    $("activity-scoped-sections").classList.toggle("hidden", !hasActivity);
+  }
+
   function renderAll() {
+    renderActivityPicker();
+    renderDashboardEmpty();
+    renderFormAvailability();
+    renderQrCode();
     renderStatusPicker();
     renderResponseQuestions();
     renderStatusFilters();
     renderAnalytics();
-    renderAdminPreview();
+    renderActivityAdminList();
+    renderActivityScopedUi();
     renderAdminList(state.questions, "admin-question-list", "questions", (r) => `${r.question_text} · ${QUESTION_TYPE_LABELS[r.question_type] || r.question_type}`);
     renderAdminList(state.scales, "admin-scale-list", "scales", (r) => `${r.rating} — ${r.scale_label}`);
     renderAdminList(state.statuses, "admin-status-list", "statuses", (r) => r.label);
@@ -820,6 +954,12 @@
   }
 
   document.querySelectorAll(".nav-tab, .mobile-nav-tab").forEach((tab) => tab.addEventListener("click", () => showView(tab.dataset.view)));
+
+  $("activity-select").addEventListener("change", () => {
+    state.activityId = $("activity-select").value;
+    state.selected = {}; state.selectedStatus = ""; state.statusFilter = "all";
+    loadAll();
+  });
 
   let secretTapCount = 0, secretTapTimer;
   $("secret-settings-button").addEventListener("click", () => {
@@ -942,13 +1082,35 @@
     showToast("เปลี่ยนรหัสผ่านแล้ว");
   });
 
-  // ---------- admin forms ----------
+  // ---------- admin: activities ----------
+  $("activity-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!db) return showToast(dbInitError || "ยังไม่ได้ตั้งค่า Supabase");
+    const name = $("activity-name-input").value.trim();
+    if (!name) return;
+    const button = event.currentTarget.querySelector("button[type=submit]");
+    setLoading(button, true);
+    const { data, error } = await adminRpc("admin_create_activity", { p_name: name });
+    setLoading(button, false);
+    if (error) {
+      if (error.code !== "42501") showToast(friendlyError(error, "สร้างกิจกรรมไม่สำเร็จ"));
+      return;
+    }
+    $("activity-name-input").value = "";
+    state.activityId = data;
+    state.selected = {}; state.selectedStatus = ""; state.statusFilter = "all";
+    showToast("สร้างกิจกรรมแล้ว");
+    loadAll();
+  });
+
+  // ---------- admin: questions / scales / statuses (scoped to state.activityId) ----------
   async function adminAction(event, fn, params, successMessage, resetInputs) {
     event.preventDefault();
     if (!db) { showToast(dbInitError || "ยังไม่ได้ตั้งค่า Supabase"); return false; }
+    if (!state.activityId) { showToast("กรุณาเลือกกิจกรรมก่อน"); return false; }
     const button = event.currentTarget.querySelector("button[type=submit]");
     setLoading(button, true);
-    const { error } = await adminRpc(fn, params);
+    const { error } = await adminRpc(fn, { p_activity_id: state.activityId, ...params });
     setLoading(button, false);
     if (error) {
       if (error.code !== "42501") showToast(friendlyError(error, "บันทึกไม่สำเร็จ"));
@@ -980,12 +1142,6 @@
     }
   });
 
-  $("activity-name-form").addEventListener("submit", (event) => {
-    const name = $("activity-name-input").value.trim();
-    if (!name) { event.preventDefault(); return; }
-    adminAction(event, "admin_update_activity_name", { p_activity_name: name }, "บันทึกชื่อกิจกรรมแล้ว", []);
-  });
-
   $("scale-form").addEventListener("submit", (event) => {
     const label = $("scale-label").value.trim();
     const rating = Number($("scale-rating").value);
@@ -1006,6 +1162,7 @@
   $("response-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!db) return showToast(dbInitError || "ยังไม่ได้ตั้งค่า Supabase");
+    if (!state.formActivityId) return;
     const message = $("response-message");
 
     if (state.statuses.length && !state.selectedStatus) {
@@ -1035,6 +1192,7 @@
     message.style.color = "var(--muted)";
 
     const { error } = await db.from("responses").insert({
+      activity_id: state.formActivityId,
       status_label: state.selectedStatus || null,
       answers,
       avg_rating: scaleValues.length ? Number(avg(scaleValues).toFixed(2)) : null
@@ -1064,11 +1222,12 @@
   });
 
   $("copy-link-button").addEventListener("click", async () => {
+    if (!state.activityId) return showToast("กรุณาเลือกกิจกรรมก่อน");
     try {
-      await navigator.clipboard.writeText(participantUrl());
+      await navigator.clipboard.writeText(participantUrl(state.activityId));
       showToast("คัดลอกลิงก์แบบประเมินแล้ว");
     } catch {
-      prompt("คัดลอกลิงก์นี้", participantUrl());
+      prompt("คัดลอกลิงก์นี้", participantUrl(state.activityId));
     }
   });
 
@@ -1078,7 +1237,6 @@
     console.info(`ระบบประเมินกิจกรรม v${APP_VERSION}`);
     if (window.lucide) lucide.createIcons();
     applyActivityName();
-    renderQrCode();
     renderAll();
     if (participantMode) showView("form");
 
