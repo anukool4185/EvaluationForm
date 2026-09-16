@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="version" content="2.9.0">
+  <meta name="version" content="2.10.0">
   <title>ระบบประเมินกิจกรรม</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
@@ -413,7 +413,7 @@
   </nav>
 
   <footer class="max-w-7xl mx-auto px-5 pb-8 md:px-8 text-center text-xs text-[#9a90a6]">
-    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.9.0</span>
+    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.10.0</span>
     <span id="db-status" class="ml-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 font-semibold">กำลังตรวจการเชื่อมต่อ...</span>
   </footer>
 
@@ -451,7 +451,7 @@
 
 <script>
   // ============ เวอร์ชัน (แก้ทุกครั้งที่อัปเดต และบันทึกใน CHANGELOG.md) ============
-  const APP_VERSION = "2.9.0";
+  const APP_VERSION = "2.10.0";
   const APP_UPDATED = "2026-09-16";
 
   // ============ ตั้งค่า Supabase (Project Settings → API) ============
@@ -1122,11 +1122,39 @@
   }
 
   // ---------- present mode: full-screen live display for projectors ----------
+  // ---------- กันจอมืด/หรี่ระหว่างฉายจอ (Wake Lock API) ----------
+  let screenWakeLock = null;
+
+  async function requestScreenWakeLock() {
+    if (!("wakeLock" in navigator)) return;
+    try {
+      screenWakeLock = await navigator.wakeLock.request("screen");
+      screenWakeLock.addEventListener("release", () => { screenWakeLock = null; });
+    } catch (error) {
+      console.warn("ขอ Wake Lock ไม่สำเร็จ:", error.message);
+    }
+  }
+
+  function releaseScreenWakeLock() {
+    if (screenWakeLock) {
+      screenWakeLock.release().catch(() => {});
+      screenWakeLock = null;
+    }
+  }
+
+  // เบราว์เซอร์จะปล่อย Wake Lock อัตโนมัติเมื่อสลับแท็บ/พับหน้าจอ ต้องขอใหม่เมื่อกลับมาเห็นหน้าเว็บอีกครั้ง
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && $("present-overlay").classList.contains("show") && !screenWakeLock) {
+      requestScreenWakeLock();
+    }
+  });
+
   function openPresentMode(activityId) {
     state.presentActivityId = activityId;
     posterZoomStep = 1;
     applyPosterZoomStep();
     updateFullscreenIcon();
+    requestScreenWakeLock();
     if (state.activityId !== activityId) {
       state.activityId = activityId;
       state.selected = {}; state.selectedStatus = ""; state.statusFilter = "all";
@@ -1214,6 +1242,7 @@
     posterZoomStep = 1;
     applyPosterZoomStep();
     if (isPresentFullscreen()) exitPresentFullscreen();
+    releaseScreenWakeLock();
   }
 
   function renderPresentMode() {
