@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="version" content="2.2.0">
+  <meta name="version" content="2.4.1">
   <title>ระบบประเมินกิจกรรม</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
@@ -54,6 +54,15 @@
 
     .qr-frame { width: min(100%, 264px); aspect-ratio: 1; display: grid; place-items: center; margin-inline: auto; padding: 20px; border: 10px solid rgba(255,255,255,.9); border-radius: 30px; background: #fff; box-shadow: 0 16px 34px rgba(107,85,129,.15); }
     .qr-frame img, .qr-frame canvas { max-width: 100%; height: auto; }
+    .qr-frame.clickable { cursor: zoom-in; transition: transform .16s ease, box-shadow .16s ease; }
+    .qr-frame.clickable:hover { transform: translateY(-2px); box-shadow: 0 20px 40px rgba(107,85,129,.22); }
+
+    #qr-zoom-overlay { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 24px; padding: 32px 20px; background: rgba(37,28,45,.94); backdrop-filter: blur(2px); }
+    #qr-zoom-overlay.show { display: flex; }
+    #qr-zoom-overlay .qr-frame { width: min(80vw, 80vh, 640px); cursor: default; border-width: 14px; }
+    #qr-zoom-title { color: #fff; text-align: center; max-width: 90vw; }
+    #qr-zoom-close { color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; width: 44px; height: 44px; display: grid; place-items: center; position: absolute; top: 20px; right: 20px; }
+    #qr-zoom-close:hover { background: rgba(255,255,255,.22); }
 
     .pie-chart { width: 200px; height: 200px; flex: 0 0 auto; border-radius: 999px; background: #ece7f0;
       border: 6px solid #fff; box-shadow: 0 12px 28px rgba(93,72,111,.14); transition: background .45s ease; }
@@ -116,7 +125,8 @@
         <article class="pastel-card p-6 sm:p-7">
           <p class="label-sm">สแกนเพื่อประเมิน</p>
           <h2 class="display-font text-2xl font-bold mt-1">QR Code สำหรับผู้เข้าร่วม</h2>
-          <div id="qrcode" class="qr-frame mt-6" aria-label="QR Code ลิงก์แบบประเมิน" role="img"></div>
+          <button id="qrcode" type="button" class="qr-frame clickable mt-6" aria-label="QR Code ลิงก์แบบประเมิน กดเพื่อขยายเต็มจอ"></button>
+          <p class="mt-2 text-center text-xs font-semibold text-[#9a90a6]">แตะที่ QR เพื่อขยายเต็มจอ เหมาะกับฉายจอโปรเจกเตอร์ในหอประชุม</p>
           <button id="copy-link-button" type="button" class="btn-primary mt-5 w-full rounded-full px-5 py-3 font-bold transition-transform hover:-translate-y-0.5">
             <span class="inline-flex items-center gap-2"><i data-lucide="copy" class="w-4 h-4"></i>คัดลอกลิงก์แบบประเมิน</span>
           </button>
@@ -155,7 +165,7 @@
           <article class="pastel-card p-6 sm:p-7">
             <div class="flex gap-3 items-center">
               <span class="grid place-items-center w-11 h-11 rounded-full bg-white/75" aria-hidden="true"><i data-lucide="sparkles" class="w-5 h-5"></i></span>
-              <h2 class="display-font text-2xl font-bold">ข้อสังเกต</h2>
+              <h2 class="display-font text-2xl font-bold">สรุป</h2>
             </div>
             <p id="insight-text" class="mt-5 leading-relaxed" aria-live="polite"></p>
           </article>
@@ -350,16 +360,25 @@
   </nav>
 
   <footer class="max-w-7xl mx-auto px-5 pb-8 md:px-8 text-center text-xs text-[#9a90a6]">
-    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.2.0</span>
+    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.4.1</span>
     <span id="db-status" class="ml-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 font-semibold">กำลังตรวจการเชื่อมต่อ...</span>
   </footer>
 
   <div id="toast" class="toast fixed bottom-5 right-5 z-50 max-w-[calc(100%-2.5rem)] rounded-2xl bg-[#4a4258] px-5 py-3 text-sm font-semibold text-white shadow-xl" role="status"></div>
+
+  <div id="qr-zoom-overlay" role="dialog" aria-modal="true" aria-label="QR Code ขยายเต็มจอ">
+    <button id="qr-zoom-close" type="button" aria-label="ปิด"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <div id="qr-zoom-frame" class="qr-frame"></div>
+    <div id="qr-zoom-title">
+      <p id="qr-zoom-name" class="display-font text-2xl font-bold"></p>
+      <p class="mt-1 text-sm text-white/70">สแกนเพื่อทำแบบประเมิน</p>
+    </div>
+  </div>
 </div>
 
 <script>
   // ============ เวอร์ชัน (แก้ทุกครั้งที่อัปเดต และบันทึกใน CHANGELOG.md) ============
-  const APP_VERSION = "2.2.0";
+  const APP_VERSION = "2.4.1";
   const APP_UPDATED = "2026-09-16";
 
   // ============ ตั้งค่า Supabase (Project Settings → API) ============
@@ -448,6 +467,12 @@
       $("activity-title").textContent = name;
       document.title = `${name} · ระบบประเมินกิจกรรม`;
     }
+  }
+
+  // กิจกรรมที่ควรผูกคำตอบด้วย: ลิงก์จริงของผู้เข้าร่วม (formActivityId) หรือถ้าเป็นแท็บ "ทำแบบประเมิน"
+  // บนหน้าแดชบอร์ดของผู้ดูแลเอง (ยังไม่ผ่าน ?view=form) ให้ใช้กิจกรรมที่กำลังเลือกอยู่แทน
+  function activeFormActivityId() {
+    return participantMode ? state.formActivityId : state.activityId;
   }
 
   const avg = (values) => values.length ? values.reduce((s, v) => s + v, 0) / values.length : 0;
@@ -572,9 +597,31 @@
   function renderQrCode() {
     const qr = $("qrcode");
     qr.replaceChildren();
+    qr.disabled = !state.activityId;
     if (!state.activityId || typeof QRCode === "undefined") return;
     new QRCode(qr, { text: participantUrl(state.activityId), width: 220, height: 220, colorDark: "#4a4258", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
   }
+
+  function openQrZoom() {
+    if (!state.activityId || typeof QRCode === "undefined") return;
+    const frame = $("qr-zoom-frame");
+    frame.replaceChildren();
+    new QRCode(frame, { text: participantUrl(state.activityId), width: 640, height: 640, colorDark: "#4a4258", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+    $("qr-zoom-name").textContent = activityName(state.activityId) || "แบบประเมินกิจกรรม";
+    $("qr-zoom-overlay").classList.add("show");
+    document.body.style.overflow = "hidden";
+    $("qr-zoom-close").focus();
+  }
+
+  function closeQrZoom() {
+    $("qr-zoom-overlay").classList.remove("show");
+    document.body.style.overflow = "";
+  }
+
+  $("qrcode").addEventListener("click", openQrZoom);
+  $("qr-zoom-close").addEventListener("click", closeQrZoom);
+  $("qr-zoom-overlay").addEventListener("click", (event) => { if (event.target.id === "qr-zoom-overlay") closeQrZoom(); });
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeQrZoom(); });
 
   function renderActivityPicker() {
     const wrap = $("activity-picker");
@@ -724,6 +771,78 @@
     });
   }
 
+  function buildSummary(responses, statusLabel) {
+    if (!db) return "ตั้งค่าการเชื่อมต่อ Supabase ก่อนเริ่มใช้งาน";
+    if (!state.activityId) return "สร้างกิจกรรมในหน้าตั้งค่าเพื่อเริ่มต้น";
+    if (!state.questions.length) return "เปิดหน้าตั้งค่า แล้วเพิ่มคำถามเพื่อเริ่มรับคำตอบ";
+
+    const hasScaleQuestion = state.questions.some((q) => q.question_type === "scale");
+    if (hasScaleQuestion && !state.scales.length) return "เพิ่มระดับคะแนนในหน้าตั้งค่าเพื่อเริ่มรับคำตอบ";
+
+    const who = statusLabel === "all" ? "ผู้ตอบทั้งหมด" : `ผู้ตอบสถานะ “${statusLabel}”`;
+    if (!responses.length) return `ยัง${statusLabel === "all" ? "ไม่มีผู้ตอบ" : `ไม่มี${who}`} แชร์ QR Code หรือคัดลอกลิงก์เพื่อรอรับคำตอบแรก`;
+
+    const sentences = [`${who}จำนวน ${responses.length.toLocaleString("th-TH")} คน`];
+    const maximum = maxRating();
+
+    const scaleQuestions = state.questions.filter((q) => q.question_type === "scale");
+    if (scaleQuestions.length) {
+      const scaleQuestionIds = new Set(scaleQuestions.map((q) => q.id));
+      const overallRatings = responses.flatMap((r) =>
+        Object.entries(r.answers || {})
+          .filter(([key]) => scaleQuestionIds.has(key))
+          .map(([, value]) => Number(value))
+          .filter((v) => Number.isFinite(v) && v > 0)
+      );
+      if (overallRatings.length) {
+        const overallPercent = toPercent(avg(overallRatings), maximum);
+        const tone = overallPercent >= 80 ? "ให้คะแนนโดยรวมดีมาก" : overallPercent >= 60 ? "ให้คะแนนโดยรวมอยู่ในเกณฑ์ดี" : "ให้คะแนนโดยรวมค่อนข้างต่ำ";
+        sentences.push(`${tone} เฉลี่ย ${overallPercent}% ของคะแนนเต็ม`);
+
+        const scored = scaleQuestions
+          .map((q) => ({ q, values: valuesForQuestion(responses, q.id) }))
+          .filter((x) => x.values.length)
+          .map((x) => ({ q: x.q, percent: toPercent(avg(x.values), maximum) }))
+          .sort((a, b) => b.percent - a.percent);
+
+        if (scored.length > 1 && scored[0].percent !== scored[scored.length - 1].percent) {
+          const best = scored[0], worst = scored[scored.length - 1];
+          sentences.push(`หัวข้อที่ได้คะแนนสูงสุดคือ “${best.q.question_text}” (${best.percent}%) ส่วนหัวข้อที่ควรพัฒนาเพิ่มคือ “${worst.q.question_text}” (${worst.percent}%)`);
+        } else if (scored.length === 1) {
+          sentences.push(`หัวข้อ “${scored[0].q.question_text}” ได้คะแนน ${scored[0].percent}%`);
+        }
+      }
+    }
+
+    const choiceQuestions = state.questions.filter((q) => q.question_type === "choice");
+    if (choiceQuestions.length) {
+      const picks = choiceQuestions.map((q) => {
+        const answered = responses.filter((r) => Array.isArray((r.answers || {})[q.id]) && r.answers[q.id].length);
+        if (!answered.length) return null;
+        const tally = new Map((q.options || []).map((opt) => [opt, 0]));
+        answered.forEach((r) => (r.answers[q.id] || []).forEach((opt) => { if (tally.has(opt)) tally.set(opt, tally.get(opt) + 1); }));
+        const top = [...tally.entries()].sort((a, b) => b[1] - a[1])[0];
+        return top && top[1] > 0 ? { q, label: top[0], share: Math.round((top[1] / answered.length) * 100) } : null;
+      }).filter(Boolean);
+
+      if (picks.length) {
+        const parts = picks.map((p) => `“${p.label}” ในหัวข้อ “${p.q.question_text}” (${p.share}%)`);
+        sentences.push(`ตัวเลือกที่ถูกเลือกมากที่สุด: ${parts.join(", ")}`);
+      }
+    }
+
+    const textQuestions = state.questions.filter((q) => q.question_type === "text");
+    if (textQuestions.length) {
+      const totalEntries = textQuestions.reduce((sum, q) => {
+        const value = (r) => typeof (r.answers || {})[q.id] === "string" && (r.answers || {})[q.id].trim();
+        return sum + responses.filter(value).length;
+      }, 0);
+      if (totalEntries) sentences.push(`มีความคิดเห็นแบบข้อความรวม ${totalEntries.toLocaleString("th-TH")} ข้อความ ดูรายละเอียดได้ในผลรายข้อด้านล่าง`);
+    }
+
+    return sentences.join(" ");
+  }
+
   function renderAnalytics() {
     const responses = filteredResponses();
     const maximum = maxRating();
@@ -781,8 +900,6 @@
       summary.appendChild(el("p", "text-sm leading-relaxed text-[#7f758c]", "ผลรายข้อจะแสดงเมื่อผู้ดูแลเพิ่มคำถามและมีผู้ตอบแล้ว"));
     }
 
-    const scalePercents = [];
-
     state.questions.forEach((question) => {
       const item = el("div");
       const header = el("div", "flex justify-between gap-4 text-sm");
@@ -818,7 +935,6 @@
       } else {
         const values = valuesForQuestion(responses, question.id);
         const qPercent = toPercent(avg(values), maximum);
-        scalePercents.push({ question, count: values.length, percent: qPercent });
         header.append(el("span", "font-bold leading-snug", question.question_text), el("span", "shrink-0 font-bold text-[#8d6279]", `${qPercent}% (${values.length})`));
         const track = el("div", "progress-track mt-2");
         const fill = el("div", "progress-fill");
@@ -830,23 +946,7 @@
       summary.appendChild(item);
     });
 
-    const insight = $("insight-text");
-    const hasScaleQuestion = state.questions.some((q) => q.question_type === "scale");
-    if (!db) {
-      insight.textContent = "ตั้งค่าการเชื่อมต่อ Supabase ก่อนเริ่มใช้งาน";
-    } else if (!state.activityId) {
-      insight.textContent = "สร้างกิจกรรมในหน้าตั้งค่าเพื่อเริ่มต้น";
-    } else if (!state.questions.length || (hasScaleQuestion && !state.scales.length)) {
-      insight.textContent = "เปิดหน้าตั้งค่า แล้วเพิ่มคำถามและระดับคะแนนเพื่อเริ่มรับคำตอบ";
-    } else if (!responses.length) {
-      insight.textContent = "แบบประเมินพร้อมใช้งานแล้ว แชร์ QR Code หรือคัดลอกลิงก์ให้ผู้เข้าร่วม";
-    } else {
-      const answered = scalePercents.filter((x) => x.count > 0).sort((a, b) => a.percent - b.percent);
-      const tone = percent >= 80 ? "ผลตอบรับโดดเด่นมาก" : percent >= 60 ? "ผลตอบรับอยู่ในเกณฑ์ดี" : "ยังมีโอกาสพัฒนาเพิ่มเติม";
-      const weakest = answered[0];
-      insight.textContent = `${tone} คะแนนภาพรวม ${percent}% จากผู้ตอบ ${responses.length.toLocaleString("th-TH")} คน`
-        + (weakest ? ` หัวข้อที่ควรติดตามคือ “${weakest.question.question_text}” (${weakest.percent}%)` : "");
-    }
+    $("insight-text").textContent = buildSummary(responses, state.statusFilter);
   }
 
   function renderDashboardEmpty() {
@@ -1388,8 +1488,14 @@
   $("response-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!db) return showToast(dbInitError || "ยังไม่ได้ตั้งค่า Supabase");
-    if (!state.formActivityId) return;
     const message = $("response-message");
+    const targetActivityId = activeFormActivityId();
+    if (!targetActivityId) {
+      console.warn("ส่งแบบประเมินไม่สำเร็จ: ไม่มีกิจกรรมที่จะบันทึกคำตอบ (participantMode=" + participantMode + ")");
+      message.textContent = "ไม่พบกิจกรรมที่จะบันทึกคำตอบ กรุณาเปิดผ่านลิงก์แบบประเมินจริง หรือเลือกกิจกรรมในหน้าตั้งค่าก่อน";
+      message.style.color = "var(--danger)";
+      return;
+    }
 
     if (state.statuses.length && !state.selectedStatus) {
       message.textContent = "กรุณาเลือกสถานะของคุณ";
@@ -1418,7 +1524,7 @@
     message.style.color = "var(--muted)";
 
     const { error } = await db.from("responses").insert({
-      activity_id: state.formActivityId,
+      activity_id: targetActivityId,
       status_label: state.selectedStatus || null,
       answers,
       avg_rating: scaleValues.length ? Number(avg(scaleValues).toFixed(2)) : null
