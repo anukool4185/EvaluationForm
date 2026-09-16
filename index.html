@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="version" content="2.10.0">
+  <meta name="version" content="2.11.0">
   <title>ระบบประเมินกิจกรรม</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
@@ -57,11 +57,49 @@
     .qr-frame.clickable { cursor: zoom-in; transition: transform .16s ease, box-shadow .16s ease; }
     .qr-frame.clickable:hover { transform: translateY(-2px); box-shadow: 0 20px 40px rgba(107,85,129,.22); }
 
-    #qr-zoom-overlay { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 24px; padding: 32px 20px; background: rgba(37,28,45,.94); backdrop-filter: blur(2px); }
+    #qr-zoom-overlay { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: clamp(16px, 3vw, 40px); overflow-y: auto; color: #fff;
+      background: radial-gradient(circle at 18% 20%, rgba(243,169,195,.18), transparent 40%), radial-gradient(circle at 85% 85%, rgba(143,211,221,.16), transparent 42%), #221a2b; }
     #qr-zoom-overlay.show { display: flex; }
-    #qr-zoom-overlay .qr-frame { width: min(80vw, 80vh, 640px); cursor: default; border-width: 14px; }
-    #qr-zoom-title { color: #fff; text-align: center; max-width: 90vw; }
-    #qr-zoom-close { color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; width: 44px; height: 44px; display: grid; place-items: center; position: absolute; top: 20px; right: 20px; }
+    .qrz-layout { display: grid; grid-template-columns: auto minmax(300px, 460px); gap: clamp(24px, 4vw, 64px); align-items: center; width: 100%; max-width: 1280px; }
+    .qrz-left { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+    .qrz-title { font-family: "Fraunces", "Noto Sans Thai", serif; font-weight: 700; font-size: clamp(1.4rem, 2.8vw, 2.4rem); line-height: 1.25; max-width: 44vw; }
+    .qrz-hint { font-size: clamp(.9rem, 1.4vw, 1.1rem); color: rgba(255,255,255,.7); }
+    #qr-zoom-overlay .qr-frame { width: min(64vh, 44vw, 620px); cursor: default; border-width: 14px; }
+    .qrz-right { display: flex; flex-direction: column; gap: clamp(12px, 1.8vh, 20px); }
+    .qrz-card { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 24px; padding: clamp(14px, 2vh, 22px) clamp(18px, 2vw, 26px); box-shadow: 0 18px 40px rgba(0,0,0,.25); }
+    .qrz-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: clamp(.85rem, 1.2vw, 1rem); font-weight: 600; color: rgba(255,255,255,.72); }
+    .qrz-card-head span.qrz-head-label { display: inline-flex; align-items: center; gap: 8px; }
+    .qrz-big { display: flex; align-items: baseline; gap: 10px; margin-top: 4px; }
+    .qrz-number { font-family: "Fraunces", "Noto Sans Thai", serif; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+    .qrz-big .qrz-number { font-size: clamp(3rem, 7vh, 5.2rem); }
+    .qrz-unit { font-size: clamp(1rem, 1.6vw, 1.3rem); color: rgba(255,255,255,.65); }
+    .qrz-live-dot { width: 11px; height: 11px; border-radius: 999px; background: #6ee7a8; box-shadow: 0 0 0 0 rgba(110,231,168,.7); animation: qrz-pulse 1.8s ease-out infinite; }
+    @keyframes qrz-pulse { 0% { box-shadow: 0 0 0 0 rgba(110,231,168,.65); } 70% { box-shadow: 0 0 0 12px rgba(110,231,168,0); } 100% { box-shadow: 0 0 0 0 rgba(110,231,168,0); } }
+    .qrz-status-list { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+    .qrz-status-row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .qrz-status-name { display: inline-flex; align-items: center; gap: 8px; font-size: clamp(.95rem, 1.4vw, 1.15rem); font-weight: 600; }
+    .qrz-status-swatch { width: 12px; height: 12px; border-radius: 4px; flex: 0 0 auto; }
+    .qrz-status-row .qrz-number { font-size: clamp(1.6rem, 3.4vh, 2.3rem); }
+    .qrz-bar { height: 10px; margin-top: 6px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; }
+    .qrz-bar-fill { height: 100%; border-radius: inherit; transition: width .5s ease; }
+    .qrz-status-sub { margin-top: 4px; font-size: .78rem; color: rgba(255,255,255,.55); }
+    .qrz-avg { display: flex; align-items: center; gap: clamp(14px, 2vw, 24px); margin-top: 10px; }
+    .qrz-ring { --pct: 0; position: relative; width: clamp(96px, 15vh, 140px); aspect-ratio: 1; flex: 0 0 auto; border-radius: 999px;
+      background: conic-gradient(#f3a9c3 calc(var(--pct) * 1%), #c9a8f2 calc(var(--pct) * 1%), rgba(255,255,255,.1) 0); transition: background .5s ease; }
+    .qrz-ring::after { content: ""; position: absolute; inset: 12px; border-radius: inherit; background: #2a2134; }
+    .qrz-ring .qrz-number { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; font-size: clamp(1.5rem, 3.4vh, 2.2rem); }
+    .qrz-avg-detail { font-size: clamp(.9rem, 1.3vw, 1.05rem); color: rgba(255,255,255,.78); line-height: 1.5; }
+    .qrz-empty { margin-top: 10px; font-size: .9rem; color: rgba(255,255,255,.55); }
+    .qrz-bump { animation: qrz-bump .45s ease; }
+    @keyframes qrz-bump { 0% { transform: scale(1); } 40% { transform: scale(1.14); color: #ffd98a; } 100% { transform: scale(1); } }
+    @media (max-width: 860px) {
+      .qrz-layout { grid-template-columns: 1fr; justify-items: center; }
+      .qrz-title { max-width: 90vw; }
+      #qr-zoom-overlay { align-items: flex-start; }
+      #qr-zoom-overlay .qr-frame { width: min(78vw, 52vh, 520px); }
+      .qrz-right { width: min(100%, 520px); }
+    }
+    #qr-zoom-close { color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; width: 44px; height: 44px; display: grid; place-items: center; position: fixed; top: 20px; right: 20px; z-index: 2; }
     #qr-zoom-close:hover { background: rgba(255,255,255,.22); }
 
     .pie-chart { width: 200px; height: 200px; flex: 0 0 auto; border-radius: 999px; background: #ece7f0;
@@ -413,18 +451,51 @@
   </nav>
 
   <footer class="max-w-7xl mx-auto px-5 pb-8 md:px-8 text-center text-xs text-[#9a90a6]">
-    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.10.0</span>
+    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.11.0</span>
     <span id="db-status" class="ml-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 font-semibold">กำลังตรวจการเชื่อมต่อ...</span>
   </footer>
 
   <div id="toast" class="toast fixed bottom-5 right-5 z-50 max-w-[calc(100%-2.5rem)] rounded-2xl bg-[#4a4258] px-5 py-3 text-sm font-semibold text-white shadow-xl" role="status"></div>
 
-  <div id="qr-zoom-overlay" role="dialog" aria-modal="true" aria-label="QR Code ขยายเต็มจอ">
+  <div id="qr-zoom-overlay" role="dialog" aria-modal="true" aria-label="QR Code ขยายเต็มจอ พร้อมสถิติสด">
     <button id="qr-zoom-close" type="button" aria-label="ปิด"><i data-lucide="x" class="w-5 h-5"></i></button>
-    <div id="qr-zoom-frame" class="qr-frame"></div>
-    <div id="qr-zoom-title">
-      <p id="qr-zoom-name" class="display-font text-2xl font-bold"></p>
-      <p class="mt-1 text-sm text-white/70">สแกนเพื่อทำแบบประเมิน</p>
+    <div class="qrz-layout">
+      <div class="qrz-left">
+        <p id="qr-zoom-name" class="qrz-title"></p>
+        <div id="qr-zoom-frame" class="qr-frame"></div>
+        <p class="qrz-hint">สแกนเพื่อทำแบบประเมิน</p>
+      </div>
+
+      <div class="qrz-right" aria-live="polite">
+        <section class="qrz-card">
+          <div class="qrz-card-head">
+            <span class="qrz-head-label"><span class="qrz-live-dot" aria-hidden="true"></span>กำลังอยู่ในหน้าทำแบบประเมิน</span>
+            <i data-lucide="smartphone" class="w-5 h-5" aria-hidden="true"></i>
+          </div>
+          <div class="qrz-big">
+            <span id="qr-live-total" class="qrz-number">0</span>
+            <span class="qrz-unit">คน</span>
+          </div>
+        </section>
+
+        <section class="qrz-card">
+          <div class="qrz-card-head">
+            <span class="qrz-head-label"><i data-lucide="users" class="w-4 h-4" aria-hidden="true"></i>แยกตามสถานะ</span>
+            <span id="qr-live-status-total" class="text-sm"></span>
+          </div>
+          <div id="qr-live-by-status" class="qrz-status-list"></div>
+        </section>
+
+        <section class="qrz-card">
+          <div class="qrz-card-head">
+            <span class="qrz-head-label"><i data-lucide="star" class="w-4 h-4" aria-hidden="true"></i>คะแนนเฉลี่ย</span>
+          </div>
+          <div class="qrz-avg">
+            <div id="qr-live-ring" class="qrz-ring"><span id="qr-live-percent" class="qrz-number">—</span></div>
+            <p id="qr-live-avg-detail" class="qrz-avg-detail">ยังไม่มีคำตอบ</p>
+          </div>
+        </section>
+      </div>
     </div>
   </div>
 
@@ -451,7 +522,7 @@
 
 <script>
   // ============ เวอร์ชัน (แก้ทุกครั้งที่อัปเดต และบันทึกใน CHANGELOG.md) ============
-  const APP_VERSION = "2.10.0";
+  const APP_VERSION = "2.11.0";
   const APP_UPDATED = "2026-09-16";
 
   // ============ ตั้งค่า Supabase (Project Settings → API) ============
@@ -697,9 +768,7 @@
   }
 
   function subscribeRealtime() {
-    const tables = participantMode
-      ? ["activities", "questions", "scales", "statuses"]
-      : ["activities", "questions", "scales", "statuses", "responses"];
+    const tables = ["activities", "questions", "scales", "statuses", "responses"];
     const channel = db.channel("evaluation-live");
     tables.forEach((table) => channel.on("postgres_changes", { event: "*", schema: "public", table }, scheduleReload));
     channel.subscribe();
@@ -715,12 +784,154 @@
     new QRCode(qr, { text: participantUrl(targetId), width: 220, height: 220, colorDark: "#4a4258", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
   }
 
+  // ---------- สถิติสด: คนที่กำลังอยู่หน้าทำแบบประเมิน (Supabase Realtime Presence ไม่ต้องแก้ฐานข้อมูล) ----------
+  const PRESENCE_CLIENT_ID = (() => {
+    const make = () => (window.crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    try {
+      let id = sessionStorage.getItem("evaluation_client_id");
+      if (!id) { id = make(); sessionStorage.setItem("evaluation_client_id", id); }
+      return id;
+    } catch {
+      return make();
+    }
+  })();
+
+  let presenceChannel = null;
+  let presenceActivityId = null;
+  let presenceSubscribed = false;
+  let presenceTrackedStatus = undefined; // undefined = ยังไม่ได้ track
+  let presenceSubmitted = false;
+  state.presence = [];
+
+  function ensurePresenceChannel(activityId) {
+    if (!db || presenceActivityId === activityId) return;
+    if (presenceChannel) { try { db.removeChannel(presenceChannel); } catch (error) { console.warn("ปิดช่อง presence เดิมไม่สำเร็จ:", error); } }
+    presenceChannel = null;
+    presenceSubscribed = false;
+    presenceTrackedStatus = undefined;
+    presenceActivityId = activityId;
+    state.presence = [];
+    renderQrLiveStats();
+    if (!activityId) return;
+
+    const channel = db.channel(`presence-${activityId}`, { config: { presence: { key: PRESENCE_CLIENT_ID } } });
+    channel.on("presence", { event: "sync" }, () => {
+      const raw = channel.presenceState() || {};
+      state.presence = Object.entries(raw).map(([key, metas]) => {
+        const latest = (metas && metas[metas.length - 1]) || {};
+        return { key, status: latest.status || null };
+      });
+      renderQrLiveStats();
+    });
+    channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        presenceSubscribed = true;
+        syncPresenceTracking();
+      }
+    });
+    presenceChannel = channel;
+  }
+
+  function shouldTrackPresence() {
+    return participantMode
+      && !presenceSubmitted
+      && !!state.formActivityId
+      && state.activities.some((a) => a.id === state.formActivityId)
+      && $("form-view").classList.contains("active");
+  }
+
+  function syncPresenceTracking() {
+    if (!presenceChannel || !presenceSubscribed) return;
+    if (shouldTrackPresence()) {
+      const status = state.selectedStatus || null;
+      if (presenceTrackedStatus === status) return;
+      presenceTrackedStatus = status;
+      presenceChannel.track({ status, at: Date.now() });
+    } else if (presenceTrackedStatus !== undefined) {
+      presenceTrackedStatus = undefined;
+      presenceChannel.untrack();
+    }
+  }
+
+  function setLiveNumber(id, text) {
+    const node = $(id);
+    if (node.textContent === text) return;
+    node.textContent = text;
+    node.classList.remove("qrz-bump");
+    void node.offsetWidth;
+    node.classList.add("qrz-bump");
+  }
+
+  function renderQrLiveStats() {
+    // 1) คนที่กำลังอยู่หน้าทำแบบประเมิน
+    setLiveNumber("qr-live-total", state.presence.length.toLocaleString("th-TH"));
+
+    // 2) แยกตามสถานะ: ส่งแล้ว + กำลังทำ (เลือกสถานะแล้วแต่ยังไม่กดส่ง)
+    const holder = $("qr-live-by-status");
+    holder.replaceChildren();
+    const rows = state.statuses.map((status, index) => {
+      const submitted = state.responses.filter((r) => r.status_label === status.label).length;
+      const pending = state.presence.filter((p) => p.status === status.label).length;
+      return { label: status.label, submitted, pending, total: submitted + pending, color: PIE_COLORS[index % PIE_COLORS.length] };
+    });
+    const undecided = state.presence.filter((p) => !p.status).length;
+    const grandTotal = rows.reduce((sum, r) => sum + r.total, 0);
+    $("qr-live-status-total").textContent = rows.length ? `รวม ${grandTotal.toLocaleString("th-TH")} คน` : "";
+
+    if (!rows.length) {
+      holder.appendChild(el("p", "qrz-empty", `กิจกรรมนี้ไม่ได้ตั้งสถานะผู้ตอบ ส่งแบบประเมินแล้ว ${state.responses.length.toLocaleString("th-TH")} คน`));
+    } else {
+      const maxTotal = Math.max(1, ...rows.map((r) => r.total));
+      rows.forEach((row) => {
+        const item = el("div", "qrz-status-row");
+        const top = el("div", "qrz-status-row-top");
+        const name = el("span", "qrz-status-name");
+        const swatch = el("span", "qrz-status-swatch");
+        swatch.style.background = row.color;
+        name.append(swatch, el("span", "", row.label));
+        const count = el("span", "qrz-number", row.total.toLocaleString("th-TH"));
+        top.append(name, count);
+
+        const bar = el("div", "qrz-bar");
+        const fill = el("div", "qrz-bar-fill");
+        fill.style.width = `${Math.round((row.total / maxTotal) * 100)}%`;
+        fill.style.background = row.color;
+        bar.appendChild(fill);
+
+        const sub = el("p", "qrz-status-sub", `ส่งแล้ว ${row.submitted.toLocaleString("th-TH")} · กำลังทำ ${row.pending.toLocaleString("th-TH")}`);
+        item.append(top, bar, sub);
+        holder.appendChild(item);
+      });
+      if (undecided) holder.appendChild(el("p", "qrz-status-sub", `ยังไม่เลือกสถานะ ${undecided.toLocaleString("th-TH")} คน`));
+    }
+
+    // 3) คะแนนเฉลี่ย (เฉพาะคำถามแบบระดับความคิดเห็น จากคำตอบที่ส่งแล้ว)
+    const maximum = maxRating();
+    const scaleIds = new Set(state.questions.filter((q) => q.question_type === "scale").map((q) => q.id));
+    const ratings = state.responses.flatMap((r) =>
+      Object.entries(r.answers || {})
+        .filter(([key]) => scaleIds.has(key))
+        .map(([, value]) => Number(value))
+        .filter((v) => Number.isFinite(v) && v > 0)
+    );
+    const hasScore = maximum > 0 && ratings.length > 0;
+    const percent = hasScore ? toPercent(avg(ratings), maximum) : 0;
+    setLiveNumber("qr-live-percent", hasScore ? `${percent}%` : "—");
+    $("qr-live-ring").style.setProperty("--pct", String(percent));
+    $("qr-live-avg-detail").textContent = hasScore
+      ? `เฉลี่ย ${avg(ratings).toFixed(2)} จาก ${maximum} คะแนน\nจากผู้ส่งแล้ว ${state.responses.length.toLocaleString("th-TH")} คน`
+      : "ยังไม่มีคำตอบแบบระดับความคิดเห็น";
+    $("qr-live-avg-detail").style.whiteSpace = "pre-line";
+  }
+
   function openQrZoom() {
-    if (!state.activityId || typeof QRCode === "undefined") return;
+    const targetId = activeFormActivityId();
+    if (!targetId || typeof QRCode === "undefined") return;
     const frame = $("qr-zoom-frame");
     frame.replaceChildren();
-    new QRCode(frame, { text: participantUrl(state.activityId), width: 640, height: 640, colorDark: "#4a4258", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
-    $("qr-zoom-name").textContent = activityName(state.activityId) || "แบบประเมินกิจกรรม";
+    new QRCode(frame, { text: participantUrl(targetId), width: 640, height: 640, colorDark: "#4a4258", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+    $("qr-zoom-name").textContent = activityName(targetId) || "แบบประเมินกิจกรรม";
+    renderQrLiveStats();
     $("qr-zoom-overlay").classList.add("show");
     document.body.style.overflow = "hidden";
     $("qr-zoom-close").focus();
@@ -808,6 +1019,7 @@
     state.statuses.forEach((status) => {
       holder.appendChild(choiceButton(status.label, state.selectedStatus === status.label, () => {
         state.selectedStatus = status.label;
+        syncPresenceTracking();
       }));
     });
   }
@@ -1575,6 +1787,9 @@
   }
 
   function renderAll() {
+    ensurePresenceChannel(state.loaded ? activeFormActivityId() : null);
+    syncPresenceTracking();
+    renderQrLiveStats();
     renderActivityPicker();
     renderDashboardEmpty();
     renderHomeActivities();
@@ -1603,6 +1818,7 @@
     document.querySelectorAll(".view-panel").forEach((panel) => panel.classList.remove("active"));
     $(`${viewName}-view`).classList.add("active");
     if (viewName === "admin") refreshAdmin();
+    syncPresenceTracking();
   }
 
   document.querySelectorAll(".nav-tab, .mobile-nav-tab").forEach((tab) => tab.addEventListener("click", () => showView(tab.dataset.view)));
@@ -1963,6 +2179,8 @@
     state.selected = {};
     state.selectedStatus = "";
     message.textContent = "";
+    presenceSubmitted = true;
+    syncPresenceTracking(); // ออกจากกลุ่ม "กำลังทำ" ทันที คำตอบจะไปนับในกลุ่ม "ส่งแล้ว" แทน
     showToast("ขอบคุณสำหรับความคิดเห็น บันทึกคำตอบแล้ว");
     await loadAll(); // ให้เห็นคำตอบของตัวเองรวมอยู่ในสรุปทันที ไม่ต้องรอ realtime
     showView("dashboard");
