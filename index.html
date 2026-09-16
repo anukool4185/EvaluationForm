@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="version" content="2.8.0">
+  <meta name="version" content="2.9.0">
   <title>ระบบประเมินกิจกรรม</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
@@ -84,7 +84,11 @@
     .home-card-poster { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
     .home-card-body { padding: 1.25rem 1.5rem 1.5rem; }
 
-    #present-poster { max-width: 92vw; max-height: 84vh; object-fit: contain; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+    #present-poster { max-width: 92vw; max-height: 84vh; object-fit: contain; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.35); transition: all .22s ease; }
+    #present-overlay.poster-step-2 { padding: 12px; gap: 12px; }
+    #present-overlay.poster-step-2 #present-poster { max-width: 98vw; max-height: 97vh; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+    #present-overlay.poster-step-3 { padding: 0; gap: 0; }
+    #present-overlay.poster-step-3 #present-poster { width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; object-fit: cover; border-radius: 0; box-shadow: none; }
 
     #present-overlay { position: fixed; inset: 0; z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 40px; padding: 40px 24px; background: linear-gradient(160deg, #241a30, #3a2740); color: #fff; text-align: center; }
     #present-overlay.show { display: flex; }
@@ -409,7 +413,7 @@
   </nav>
 
   <footer class="max-w-7xl mx-auto px-5 pb-8 md:px-8 text-center text-xs text-[#9a90a6]">
-    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.8.0</span>
+    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.9.0</span>
     <span id="db-status" class="ml-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 font-semibold">กำลังตรวจการเชื่อมต่อ...</span>
   </footer>
 
@@ -447,7 +451,7 @@
 
 <script>
   // ============ เวอร์ชัน (แก้ทุกครั้งที่อัปเดต และบันทึกใน CHANGELOG.md) ============
-  const APP_VERSION = "2.8.0";
+  const APP_VERSION = "2.9.0";
   const APP_UPDATED = "2026-09-16";
 
   // ============ ตั้งค่า Supabase (Project Settings → API) ============
@@ -1120,6 +1124,9 @@
   // ---------- present mode: full-screen live display for projectors ----------
   function openPresentMode(activityId) {
     state.presentActivityId = activityId;
+    posterZoomStep = 1;
+    applyPosterZoomStep();
+    updateFullscreenIcon();
     if (state.activityId !== activityId) {
       state.activityId = activityId;
       state.selected = {}; state.selectedStatus = ""; state.statusFilter = "all";
@@ -1141,33 +1148,72 @@
     icon.setAttribute("data-lucide", active ? "minimize" : "maximize");
     icon.className = "w-5 h-5";
     btn.appendChild(icon);
-    btn.setAttribute("aria-label", active ? "ออกจากเต็มหน้าจอ" : "ขยายเต็มหน้าจอ");
+    const label = currentActivityHasPoster()
+      ? (posterZoomStep >= 3 ? "ย่อกลับขนาดเดิม" : `ขยายรูปอีกขั้น (${posterZoomStep}/3)`)
+      : (active ? "ออกจากเต็มหน้าจอ" : "ขยายเต็มหน้าจอ");
+    btn.setAttribute("aria-label", label);
     if (window.lucide) lucide.createIcons();
   }
 
-  function togglePresentFullscreen() {
+  // ---------- ขยายรูปโปสเตอร์ 3 สเต็บ: 1) กรอบเดิม 2) ใหญ่ขึ้น เหลือขอบนิดหน่อย 3) เต็มจอไม่มีขอบ (เข้า Fullscreen จริงด้วย) ----------
+  let posterZoomStep = 1;
+
+  function applyPosterZoomStep() {
+    const overlay = $("present-overlay");
+    overlay.classList.remove("poster-step-2", "poster-step-3");
+    if (posterZoomStep === 2) overlay.classList.add("poster-step-2");
+    if (posterZoomStep === 3) overlay.classList.add("poster-step-3");
+  }
+
+  function currentActivityHasPoster() {
+    const activity = state.activities.find((a) => a.id === state.activityId);
+    return !!(activity && activity.poster_image);
+  }
+
+  function requestPresentFullscreen() {
     const el = $("present-overlay");
-    if (!isPresentFullscreen()) {
-      const request = el.requestFullscreen || el.webkitRequestFullscreen;
-      if (request) request.call(el);
-    } else {
-      const exit = document.exitFullscreen || document.webkitExitFullscreen;
-      if (exit) exit.call(document);
+    const request = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (request) request.call(el);
+  }
+
+  function exitPresentFullscreen() {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit) exit.call(document);
+  }
+
+  function togglePresentFullscreen() {
+    if (currentActivityHasPoster()) {
+      posterZoomStep = posterZoomStep >= 3 ? 1 : posterZoomStep + 1;
+      applyPosterZoomStep();
+      if (posterZoomStep === 3 && !isPresentFullscreen()) requestPresentFullscreen();
+      else if (posterZoomStep !== 3 && isPresentFullscreen()) exitPresentFullscreen();
+      updateFullscreenIcon(); // สเต็บ 1↔2 ไม่ยิง fullscreenchange จึงต้องอัปเดตป้ายเอง
+      return;
+    }
+    if (!isPresentFullscreen()) requestPresentFullscreen();
+    else exitPresentFullscreen();
+  }
+
+  function handlePresentFullscreenChange() {
+    updateFullscreenIcon();
+    // ถ้าออกจาก Fullscreen จริงระหว่างอยู่สเต็บ 3 (เช่นกด Esc ของเบราว์เซอร์เอง) ให้ถอยกลับมาสเต็บ 2
+    if (!isPresentFullscreen() && posterZoomStep === 3) {
+      posterZoomStep = 2;
+      applyPosterZoomStep();
     }
   }
 
-  document.addEventListener("fullscreenchange", updateFullscreenIcon);
-  document.addEventListener("webkitfullscreenchange", updateFullscreenIcon);
+  document.addEventListener("fullscreenchange", handlePresentFullscreenChange);
+  document.addEventListener("webkitfullscreenchange", handlePresentFullscreenChange);
   $("present-fullscreen").addEventListener("click", togglePresentFullscreen);
 
   function closePresentMode() {
     state.presentActivityId = null;
     $("present-overlay").classList.remove("show");
     document.body.style.overflow = "";
-    if (isPresentFullscreen()) {
-      const exit = document.exitFullscreen || document.webkitExitFullscreen;
-      if (exit) exit.call(document);
-    }
+    posterZoomStep = 1;
+    applyPosterZoomStep();
+    if (isPresentFullscreen()) exitPresentFullscreen();
   }
 
   function renderPresentMode() {
@@ -1178,6 +1224,7 @@
     document.body.style.overflow = "hidden";
     const activity = state.activities.find((a) => a.id === state.activityId);
     const hasPoster = !!(activity && activity.poster_image);
+    updateFullscreenIcon(); // ตอนนี้ state.activities พร้อมแล้ว ป้ายปุ่มขยายจะถูกต้องตามจริง
 
     const posterImg = $("present-poster");
     if (hasPoster) {
