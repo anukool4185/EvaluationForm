@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="version" content="2.13.0">
+  <meta name="version" content="2.14.0">
   <title>ระบบประเมินกิจกรรม</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
@@ -415,7 +415,8 @@
           <i data-lucide="alert-circle" class="w-10 h-10 mx-auto text-[#d98aa8]"></i>
           <h3 id="exam-take-error-title" class="display-font text-2xl font-bold mt-3"></h3>
           <p id="exam-take-error-text" class="mt-2 text-[#7f758c]"></p>
-          <button id="exam-take-retry" type="button" class="btn-soft mt-6 rounded-full px-5 py-3 font-bold">ลองอีกครั้ง</button>
+          <button id="exam-take-next" type="button" class="hidden btn-primary mt-6 w-full rounded-full px-5 py-4 font-bold"></button>
+          <button id="exam-take-retry" type="button" class="btn-soft mt-4 rounded-full px-5 py-3 font-bold">ลองอีกครั้ง</button>
         </div>
 
         <div id="exam-identify" class="hidden pastel-card p-6 space-y-4">
@@ -506,6 +507,7 @@
             <p id="waiting-label" class="text-sm font-semibold text-[#7f758c]">ข้อสอบจะเปิดในอีก</p>
             <p id="waiting-countdown" class="countdown">--:--:--</p>
             <p id="waiting-opens" class="mt-1 text-sm text-[#7f758c]"></p>
+            <p id="waiting-closes" class="text-sm text-[#7f758c]"></p>
           </div>
           <p id="waiting-message" class="mt-4 min-h-5 text-sm font-semibold text-[#8a6116]" aria-live="polite"></p>
           <p class="mt-4 rounded-2xl bg-[#fff8ea] px-4 py-3 text-xs font-semibold text-[#8a6116]">เปิดหน้านี้ค้างไว้ได้เลย เมื่อถึงเวลาข้อสอบจะเปิดให้อัตโนมัติ</p>
@@ -537,7 +539,7 @@
             </div>
             <div class="flex items-center gap-3">
               <div class="min-w-0 flex-1">
-                <p id="sheet-progress-text" class="text-sm font-bold"></p>
+                <p class="flex flex-wrap items-baseline justify-between gap-x-3"><span id="sheet-progress-text" class="text-sm font-bold"></span><span id="sheet-timer" class="hidden text-sm font-bold tabular-nums"></span></p>
                 <div class="progress-track mt-1"><div id="sheet-progress" class="progress-fill" style="width:0%"></div></div>
               </div>
               <button id="sheet-submit" type="button" class="btn-primary shrink-0 rounded-full px-5 py-3 font-bold">ส่งกระดาษคำตอบ</button>
@@ -550,6 +552,7 @@
           <p class="mt-4 text-sm font-semibold text-[#7f758c]">คะแนนของคุณ</p>
           <p class="mt-1"><span id="result-score" class="result-score"></span><span class="text-2xl font-bold text-[#7f758c]"> / <span id="result-total"></span></span></p>
           <p id="result-percent" class="mt-2 text-lg font-bold"></p>
+          <p id="result-auto-note" class="hidden mt-2 rounded-2xl bg-[#fff8ea] px-4 py-2 text-xs font-semibold text-[#8a6116]">หมดเวลาสอบ ระบบส่งกระดาษคำตอบให้อัตโนมัติจากคำตอบที่ระบายไว้</p>
           <dl class="result-grid mt-6 rounded-2xl bg-white/70 p-4">
             <dt>รหัสนักเรียน</dt><dd id="result-code"></dd>
             <dt>ชื่อ-นามสกุล</dt><dd id="result-name"></dd>
@@ -634,11 +637,13 @@
       <div id="evaluation-waiting" class="hidden pastel-card p-8 text-center lg:col-span-2">
         <i data-lucide="clock" class="w-10 h-10 mx-auto text-[#d98aa8]"></i>
         <p id="evaluation-waiting-activity" class="label-sm mt-3"></p>
-        <h3 class="display-font text-2xl font-bold mt-1">แบบประเมินยังไม่เปิด</h3>
-        <p class="mt-4 text-sm font-semibold text-[#7f758c]">จะเปิดให้ทำในอีก</p>
-        <p id="evaluation-countdown" class="countdown">--:--:--</p>
+        <h3 id="evaluation-waiting-title" class="display-font text-2xl font-bold mt-1">แบบประเมินยังไม่เปิด</h3>
+        <div id="evaluation-countdown-wrap">
+          <p class="mt-4 text-sm font-semibold text-[#7f758c]">จะเปิดให้ทำในอีก</p>
+          <p id="evaluation-countdown" class="countdown">--:--:--</p>
+        </div>
         <p id="evaluation-opens" class="mt-1 text-sm text-[#7f758c]"></p>
-        <p class="mx-auto mt-5 max-w-md rounded-2xl bg-[#fff8ea] px-4 py-3 text-xs font-semibold text-[#8a6116]">เปิดหน้านี้ค้างไว้ได้เลย เมื่อถึงเวลาแบบประเมินจะปรากฏอัตโนมัติ</p>
+        <p id="evaluation-waiting-note" class="mx-auto mt-5 max-w-md rounded-2xl bg-[#fff8ea] px-4 py-3 text-xs font-semibold text-[#8a6116]">เปิดหน้านี้ค้างไว้ได้เลย เมื่อถึงเวลาแบบประเมินจะปรากฏอัตโนมัติ</p>
       </div>
 
       <div id="form-content" class="contents">
@@ -646,6 +651,7 @@
           <div class="mb-4">
             <p class="label-sm">ความคิดเห็นของคุณ</p>
             <h2 id="form-activity-title" class="display-font text-2xl md:text-3xl font-bold mt-1">แบบประเมินกิจกรรม</h2>
+            <p id="evaluation-closing" class="hidden mt-2 inline-flex rounded-full bg-[#fff1c9] px-3 py-1 text-xs font-bold text-[#8a6116] tabular-nums"></p>
           </div>
 
           <div id="thank-you" class="hidden pastel-card p-8 text-center">
@@ -816,10 +822,17 @@
             <p id="exam-admin-status" class="mt-3 text-sm text-[#7f758c]"></p>
 
             <form id="evaluation-schedule-form" class="mt-4 flex flex-wrap items-end gap-3 rounded-2xl bg-white/55 p-4">
-              <div class="min-w-[14rem] flex-1">
-                <label class="block text-sm font-bold mb-1" for="evaluation-opens-input">เวลาเปิดแบบประเมินของกิจกรรมนี้</label>
-                <input id="evaluation-opens-input" type="datetime-local" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
-                <p class="mt-1 text-xs text-[#7f758c]">เว้นว่าง = เปิดทันที ก่อนถึงเวลามือถือจะแสดงนับถอยหลังและเปิดแบบประเมินให้อัตโนมัติ</p>
+              <div class="w-full">
+                <p class="text-sm font-bold">ช่วงเวลาทำแบบประเมินของกิจกรรมนี้</p>
+                <p class="text-xs text-[#7f758c]">เว้นว่างเปิด = เปิดทันที · เว้นว่างปิด = ไม่ปิด · มือถือนับถอยหลังและเปิด/ปิดให้อัตโนมัติ</p>
+              </div>
+              <div class="min-w-[11rem] flex-1">
+                <label class="block text-xs font-bold text-[#7f758c] mb-1" for="evaluation-opens-input">เปิดแบบประเมิน</label>
+                <input id="evaluation-opens-input" type="datetime-local" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-3 py-2.5 outline-none">
+              </div>
+              <div class="min-w-[11rem] flex-1">
+                <label class="block text-xs font-bold text-[#7f758c] mb-1" for="evaluation-closes-input">ปิดแบบประเมิน</label>
+                <input id="evaluation-closes-input" type="datetime-local" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-3 py-2.5 outline-none">
               </div>
               <button id="evaluation-opens-clear" type="button" class="btn-soft rounded-full px-4 py-3 text-sm font-bold">ล้าง</button>
               <button type="submit" class="btn-primary rounded-full px-5 py-3 font-bold disabled:opacity-60">บันทึกเวลา</button>
@@ -844,12 +857,21 @@
                   <input id="exam-count-input" type="number" min="1" max="500" placeholder="เว้นว่าง = ครบทุกข้อแต่สลับลำดับ" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
                 </div>
                 <div>
-                  <label class="block text-sm font-bold mb-1" for="exam-opens-input">เวลาเปิดสอบ (ข้อสอบจะเปิดบนมือถือเองอัตโนมัติ)</label>
-                  <div class="flex gap-2">
-                    <input id="exam-opens-input" type="datetime-local" class="min-w-0 flex-1 rounded-2xl border border-[#dfd3e5] bg-white/90 px-4 py-3 outline-none">
-                    <button id="exam-opens-clear" type="button" class="btn-soft shrink-0 rounded-full px-4 text-sm font-bold">ล้าง</button>
+                  <p class="block text-sm font-bold mb-1">ช่วงเวลาสอบ<span class="exam-phase-name"></span></p>
+                  <div class="grid gap-2 sm:grid-cols-2">
+                    <div>
+                      <label class="block text-xs font-bold text-[#7f758c] mb-1" for="exam-opens-input">เปิดสอบ</label>
+                      <input id="exam-opens-input" type="datetime-local" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-3 py-2.5 outline-none">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-[#7f758c] mb-1" for="exam-closes-input">ปิดสอบ</label>
+                      <input id="exam-closes-input" type="datetime-local" class="w-full rounded-2xl border border-[#dfd3e5] bg-white/90 px-3 py-2.5 outline-none">
+                    </div>
                   </div>
-                  <p class="mt-1 text-xs text-[#7f758c]">เว้นว่าง = เปิดสอบได้ทันที</p>
+                  <div class="mt-1 flex flex-wrap items-center justify-between gap-2">
+                    <p class="text-xs text-[#7f758c]">เว้นว่างเปิด = เปิดทันที · เว้นว่างปิด = ไม่ปิด · ถึงเวลาปิดระบบส่งกระดาษคำตอบให้อัตโนมัติ</p>
+                    <button id="exam-opens-clear" type="button" class="btn-soft shrink-0 rounded-full px-3 py-1 text-xs font-bold">ล้างเวลา</button>
+                  </div>
                 </div>
                 <label class="flex items-center gap-2 text-sm font-bold">
                   <input id="exam-open-input" type="checkbox" class="h-4 w-4 accent-[#d9749a]"> เปิดรับการสอบ (ปิด = ปิดรับทันทีไม่ว่าจะถึงเวลาหรือไม่)
@@ -970,7 +992,7 @@
   </nav>
 
   <footer class="max-w-7xl mx-auto px-5 pb-8 md:px-8 text-center text-xs text-[#9a90a6]">
-    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.13.0</span>
+    ระบบประเมินกิจกรรม <span id="app-version" class="font-semibold">เวอร์ชัน 2.14.0</span>
     <span id="db-status" class="ml-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 font-semibold">กำลังตรวจการเชื่อมต่อ...</span>
   </footer>
 
@@ -1071,7 +1093,7 @@
 
 <script>
   // ============ เวอร์ชัน (แก้ทุกครั้งที่อัปเดต และบันทึกใน CHANGELOG.md) ============
-  const APP_VERSION = "2.13.0";
+  const APP_VERSION = "2.14.0";
   const APP_UPDATED = "2026-09-17";
 
   // ============ ตั้งค่า Supabase (Project Settings → API) ============
@@ -1203,6 +1225,7 @@
     if (error.code === "42501") return "ไม่มีสิทธิ์ทำรายการนี้ กรุณาเข้าสู่ระบบผู้ดูแล";
     if (error.code === "PGRST202") return "ฐานข้อมูลยังไม่มีฟังก์ชันนี้ กรุณารัน schema.sql เวอร์ชันล่าสุด";
     if (error.code === "PGRST205" || error.code === "42P01") return "ฐานข้อมูลยังไม่มีตาราง กรุณารัน schema.sql";
+    if (/close_before_open/.test(error.message || "")) return "เวลาปิดต้องอยู่หลังเวลาเปิด";
     if (/invalid api key|jwt|apikey/i.test(error.message || "")) return "คีย์ Supabase ไม่ถูกต้อง";
     if (/failed to fetch|network/i.test(error.message || "")) return "เชื่อมต่อ Supabase ไม่ได้ (ตรวจอินเทอร์เน็ต)";
     return `${fallback} (${error.message})`;
@@ -1266,7 +1289,7 @@
     if (!db) return;
     try {
       const { data: activities, error: activitiesError } = await db.from("activities")
-        .select("id,name,poster_image,evaluation_opens_at,created_at").order("created_at", { ascending: true });
+        .select("id,name,poster_image,evaluation_opens_at,evaluation_closes_at,created_at").order("created_at", { ascending: true });
       if (activitiesError) throw activitiesError;
       state.activities = activities;
 
@@ -1580,21 +1603,42 @@
     return activity && activity.evaluation_opens_at ? new Date(activity.evaluation_opens_at).getTime() : null;
   }
 
+  function evaluationClosesAtMs() {
+    const activity = state.activities.find((a) => a.id === state.formActivityId);
+    return activity && activity.evaluation_closes_at ? new Date(activity.evaluation_closes_at).getTime() : null;
+  }
+
   function renderFormAvailability() {
     if (!participantMode) return;
     const valid = !state.loaded || (state.formActivityId && state.activities.some((a) => a.id === state.formActivityId));
     const opensAt = evaluationOpensAtMs();
+    const closesAt = evaluationClosesAtMs();
     const now = Date.now() + evaluationGate.offset;
-    const gated = valid && state.loaded && opensAt && now < opensAt;
+    const before = valid && state.loaded && opensAt && now < opensAt;
+    const after = valid && state.loaded && closesAt && now >= closesAt;
+    const gated = before || after;
 
     $("form-activity-missing").classList.toggle("hidden", valid);
     $("evaluation-waiting").classList.toggle("hidden", !gated);
     $("form-content").classList.toggle("hidden", !valid || !!gated);
 
+    const closing = $("evaluation-closing");
+    closing.classList.toggle("hidden", !(valid && state.loaded && !gated && closesAt));
+    if (!gated && closesAt) closing.textContent = `ปิดรับแบบประเมินในอีก ${formatCountdown(closesAt - now)}`;
+
     if (gated) {
       $("evaluation-waiting-activity").textContent = activityName(state.formActivityId);
-      $("evaluation-countdown").textContent = formatCountdown(opensAt - now);
-      $("evaluation-opens").textContent = `เปิด ${formatThaiDateTime(new Date(opensAt).toISOString())} น.`;
+      $("evaluation-waiting-title").textContent = after ? "แบบประเมินปิดรับแล้ว" : "แบบประเมินยังไม่เปิด";
+      $("evaluation-countdown-wrap").classList.toggle("hidden", !!after);
+      $("evaluation-waiting-note").classList.toggle("hidden", !!after);
+      if (before) $("evaluation-countdown").textContent = formatCountdown(opensAt - now);
+      $("evaluation-opens").textContent = after
+        ? `ปิดเมื่อ ${formatThaiDateTime(new Date(closesAt).toISOString())} น. ขอบคุณที่ร่วมกิจกรรม`
+        : `เปิด ${formatThaiDateTime(new Date(opensAt).toISOString())} น.` + (closesAt ? ` · ปิด ${formatThaiDateTime(new Date(closesAt).toISOString())} น.` : "");
+    }
+
+    const needsTimer = valid && state.loaded && (before || (!after && closesAt));
+    if (needsTimer) {
       if (!evaluationGate.timer) {
         evaluationGate.timer = setInterval(() => {
           if (Date.now() - evaluationGate.syncedAt > 300000) syncEvaluationClock();
@@ -2783,7 +2827,7 @@
     setLoading(button, false);
 
     if (error) {
-      message.textContent = error.code === "42501" ? "แบบประเมินยังไม่เปิดรับคำตอบ กรุณารอถึงเวลาที่กำหนด" : friendlyError(error, "ส่งแบบประเมินไม่สำเร็จ กรุณาลองอีกครั้ง");
+      message.textContent = error.code === "42501" ? "แบบประเมินไม่ได้เปิดรับคำตอบในช่วงเวลานี้" : friendlyError(error, "ส่งแบบประเมินไม่สำเร็จ กรุณาลองอีกครั้ง");
       message.style.color = "var(--danger)";
       return;
     }
@@ -2831,7 +2875,8 @@
     invalid_location: "กรุณาเลือกสถานที่สอบ",
     attempt_not_found: "ไม่พบกระดาษคำตอบนี้ กรุณาเริ่มทำใหม่",
     answers_too_large: "ข้อมูลคำตอบผิดปกติ กรุณาลองใหม่",
-    registration_not_found: "ไม่พบข้อมูลลงทะเบียน กรุณาค้นหาใหม่"
+    registration_not_found: "ไม่พบข้อมูลลงทะเบียน กรุณาค้นหาใหม่",
+    exam_time_over: "หมดเวลาสอบแล้ว"
   };
 
   state.exam = { phase: "pre", overview: null, results: [], registrations: [], counts: null, loadedFor: null, settingsKey: null, evalKey: null, serverOffset: 0 };
@@ -2881,11 +2926,24 @@
     return url.toString();
   }
 
-  function scheduleText(opensAt, isOpen) {
-    if (isOpen === false) return "ปิดรับ";
-    if (!opensAt) return "เปิดแล้ว";
-    const future = new Date(opensAt).getTime() > Date.now() + (state.exam.serverOffset || 0);
-    return future ? `เปิด ${formatThaiDateTime(opensAt)} น.` : `เปิดแล้ว (${formatThaiDateTime(opensAt)})`;
+  function windowState(opensAt, closesAt, isOpen) {
+    const now = Date.now() + (state.exam.serverOffset || 0);
+    if (isOpen === false) return "off";
+    if (closesAt && now >= new Date(closesAt).getTime()) return "over";
+    if (opensAt && now < new Date(opensAt).getTime()) return "before";
+    return "open";
+  }
+
+  function shortTime(iso) {
+    return new Date(iso).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+
+  function scheduleText(opensAt, closesAt, isOpen) {
+    const stateName = windowState(opensAt, closesAt, isOpen);
+    if (stateName === "off") return "ปิดรับ";
+    if (stateName === "over") return `ปิดแล้ว (${shortTime(closesAt)})`;
+    if (stateName === "before") return closesAt ? `${shortTime(opensAt)} – ${shortTime(closesAt)}` : `เปิด ${shortTime(opensAt)}`;
+    return closesAt ? `เปิดอยู่ ถึง ${shortTime(closesAt)}` : "เปิดอยู่";
   }
 
   function renderRegisterPanel() {
@@ -2910,9 +2968,9 @@
     const direct = Number(counts.registrations_direct || 0);
     setBumpNumber("register-count", total.toLocaleString("th-TH"));
     $("register-count-detail").textContent = total ? `ผ่านหน้าลงทะเบียน ${direct.toLocaleString("th-TH")} คน · ลงทะเบียนตอนเข้าสอบ ${(total - direct).toLocaleString("th-TH")} คน` : "";
-    $("register-sched-pre").textContent = counts.pre ? scheduleText(counts.pre.opens_at, counts.pre.is_open) : "—";
-    $("register-sched-post").textContent = counts.post ? scheduleText(counts.post.opens_at, counts.post.is_open) : "—";
-    $("register-sched-eval").textContent = counts.pre ? scheduleText(counts.evaluation_opens_at, true) : "—";
+    $("register-sched-pre").textContent = counts.pre ? scheduleText(counts.pre.opens_at, counts.pre.closes_at, counts.pre.is_open) : "—";
+    $("register-sched-post").textContent = counts.post ? scheduleText(counts.post.opens_at, counts.post.closes_at, counts.post.is_open) : "—";
+    $("register-sched-eval").textContent = counts.pre ? scheduleText(counts.evaluation_opens_at, counts.evaluation_closes_at, true) : "—";
   }
 
   function renderExamPanels() {
@@ -2941,11 +2999,14 @@
       $(`exam-${phase}-qcount`).textContent = `คลังข้อสอบ ${Number(c.question_count || 0).toLocaleString("th-TH")} ข้อ`;
 
       const badge = $(`exam-${phase}-badge`);
-      const future = c.opens_at && new Date(c.opens_at).getTime() > Date.now() + (state.exam.serverOffset || 0);
-      badge.classList.toggle("open", c.is_open !== false && !future);
-      badge.classList.toggle("wait", c.is_open !== false && !!future);
-      badge.classList.toggle("closed", c.is_open === false);
-      badge.textContent = c.is_open === false ? "ปิดรับการสอบ" : future ? `เปิดสอบ ${formatThaiDateTime(c.opens_at)} น.` : "เปิดรับการสอบ";
+      const ws = windowState(c.opens_at, c.closes_at, c.is_open);
+      badge.classList.toggle("open", ws === "open");
+      badge.classList.toggle("wait", ws === "before");
+      badge.classList.toggle("closed", ws === "off" || ws === "over");
+      badge.textContent = ws === "off" ? "ปิดรับการสอบ"
+        : ws === "over" ? `หมดเวลาสอบ (${shortTime(c.closes_at)})`
+        : ws === "before" ? `สอบ ${scheduleText(c.opens_at, c.closes_at, true)}`
+        : c.closes_at ? `เปิดสอบ ถึง ${shortTime(c.closes_at)}` : "เปิดรับการสอบ";
     });
     renderRegisterPanel();
     renderExamZoomStats();
@@ -2985,7 +3046,7 @@
     if (examZoomPhase === "register") {
       const counts = state.exam.counts || {};
       setLiveNumber("exam-zoom-started", Number(counts.registrations || 0).toLocaleString("th-TH"));
-      $("exam-zoom-started-detail").textContent = counts.pre ? `สอบก่อนอบรม: ${scheduleText(counts.pre.opens_at, counts.pre.is_open)}` : "";
+      $("exam-zoom-started-detail").textContent = counts.pre ? `สอบก่อนอบรม: ${scheduleText(counts.pre.opens_at, counts.pre.closes_at, counts.pre.is_open)}` : "";
       return;
     }
     $("exam-zoom-started-detail").textContent = "";
@@ -3043,7 +3104,7 @@
   // ---------- มือถือ: ลงทะเบียน → สอบก่อน → สอบหลัง → ประเมิน ----------
   // ตัวตนผู้สอบเก็บใน sessionStorage: อยู่ต่อเมื่อรีเฟรชหรือสลับแอปในแท็บเดิม
   // ถ้าปิดแท็บ/ปัดทิ้งแล้วสแกนใหม่ จะต้องค้นหาจากรหัสนักเรียนแล้วเลือกชื่อ
-  const journey = { flow: null, serverOffset: 0, timer: null, pollTimer: null, autoNextTimer: null, busy: false, waiting: null, registerSource: "register" };
+  const journey = { flow: null, serverOffset: 0, timer: null, pollTimer: null, autoNextTimer: null, sheetTimer: null, saveTimer: null, autoSubmitting: false, busy: false, waiting: null, registerSource: "register" };
 
   function serverNow() { return Date.now() + journey.serverOffset; }
   function syncServerClock(iso) { if (iso) journey.serverOffset = new Date(iso).getTime() - Date.now(); }
@@ -3072,9 +3133,11 @@
     clearInterval(journey.timer);
     clearInterval(journey.pollTimer);
     clearTimeout(journey.autoNextTimer);
+    clearInterval(journey.sheetTimer);
     journey.timer = null;
     journey.pollTimer = null;
     journey.autoNextTimer = null;
+    journey.sheetTimer = null;
     journey.waiting = null;
   }
 
@@ -3110,10 +3173,35 @@
     if (!wasVisible) window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function showExamError(title, text) {
+  function showExamError(title, text, next) {
     $("exam-take-error-title").textContent = title;
     $("exam-take-error-text").textContent = text;
+    const nextButton = $("exam-take-next");
+    nextButton.classList.toggle("hidden", !next);
+    nextButton.textContent = next ? next.label : "";
+    nextButton.onclick = next ? next.action : null;
+    $("exam-take-retry").classList.toggle("hidden", !!next);
     showExamStage("error");
+  }
+
+  function goToEvaluation() {
+    const url = new URL(location.href);
+    url.search = ""; url.hash = "";
+    url.searchParams.set("view", "form");
+    url.searchParams.set("activity", urlActivityId);
+    location.href = url.toString();
+  }
+
+  function nextStepFor(phase) {
+    return phase === "pre"
+      ? { label: "ไปทำข้อสอบหลังอบรม", action: () => goToPhase("post") }
+      : { label: "ไปทำแบบประเมิน", action: goToEvaluation };
+  }
+
+  function showTimeOver(closesAt) {
+    stopJourneyTimers();
+    const when = closesAt ? ` (ปิดเมื่อ ${formatThaiDateTime(closesAt)} น.)` : "";
+    showExamError(`หมดเวลาสอบ${EXAM_PHASE_LABEL[examPhase]}แล้ว`, `ไม่สามารถเข้าสอบได้แล้ว${when}`, nextStepFor(examPhase));
   }
 
   function fillSelect(select, values, placeholder, labelFor) {
@@ -3190,6 +3278,7 @@
 
   $("exam-take-retry").addEventListener("click", () => {
     if (!db || !examMode) return;
+    if (state.examTake.paper && !state.examTake.paper.submitted) { journey.autoSubmitting = false; return autoSubmitSheet(); }
     if (registerEntry && !getJourney().registration && examPhase === "pre" && !journey.flow) return startRegistrationPage();
     startPhaseFlow();
   });
@@ -3365,7 +3454,8 @@
         stopJourneyTimers();
         if (data.submitted) return showExamResult(data);
         state.examTake.paper = data;
-        state.examTake.answers = readAnswers(data.attempt_id);
+        const local = readAnswers(data.attempt_id);
+        state.examTake.answers = Object.keys(local).length ? local : { ...(data.saved_answers || {}) };
         return renderAnswerSheet();
       }
 
@@ -3376,6 +3466,8 @@
           return openIdentify();
         case "exam_not_yet_open":
           return showWaiting({ opensAt: data.opens_at });
+        case "exam_time_over":
+          return showTimeOver(data.closes_at);
         case "invalid_location":
           setJourney({ location: null });
           try { await loadFlowInfo(); } catch { /* ใช้ข้อมูลเดิม */ }
@@ -3430,6 +3522,8 @@
       $("waiting-label").textContent = "ข้อสอบจะเปิดในอีก";
       $("waiting-countdown").textContent = formatCountdown(waiting.opensAt - serverNow());
       $("waiting-opens").textContent = `เปิดสอบ ${formatThaiDateTime(new Date(waiting.opensAt).toISOString())} น.`;
+      const closesAt = journey.flow && journey.flow[examPhase].closes_at;
+      $("waiting-closes").textContent = closesAt ? `ปิดสอบ ${formatThaiDateTime(closesAt)} น.` : "";
       message.textContent = needsLocation ? "เลือกสถานที่สอบไว้ล่วงหน้าได้เลย" : waiting.message;
       return;
     }
@@ -3437,6 +3531,9 @@
     $("waiting-label").textContent = "ถึงเวลาสอบแล้ว";
     $("waiting-countdown").textContent = "00:00:00";
     $("waiting-opens").textContent = "";
+    const closesAtMs = journey.flow && journey.flow[examPhase].closes_at ? new Date(journey.flow[examPhase].closes_at).getTime() : null;
+    $("waiting-closes").textContent = closesAtMs ? `ปิดสอบ ${formatThaiDateTime(journey.flow[examPhase].closes_at)} น.` : "";
+    if (closesAtMs && serverNow() >= closesAtMs) return showTimeOver(journey.flow[examPhase].closes_at);
     if (needsLocation) {
       message.textContent = "กรุณาเลือกสถานที่สอบเพื่อเริ่มทำข้อสอบ";
       return;
@@ -3519,6 +3616,7 @@
           else answers[question.id] = choiceIndex;
           choices.querySelectorAll(".sheet-choice").forEach((b, i) => b.setAttribute("aria-checked", String(answers[question.id] === i)));
           writeAnswers(paper.attempt_id, answers);
+          scheduleAutosave();
           updateSheetProgress();
           hideSheetConfirm();
         });
@@ -3532,6 +3630,65 @@
     hideSheetConfirm();
     updateSheetProgress();
     showExamStage("sheet");
+    startSheetTimer();
+  }
+
+  // ---------- เวลาเหลือบนกระดาษคำตอบ + บันทึกอัตโนมัติ + ส่งอัตโนมัติเมื่อหมดเวลา ----------
+  function startSheetTimer() {
+    clearInterval(journey.sheetTimer);
+    journey.sheetTimer = null;
+    journey.autoSubmitting = false;
+    const paper = state.examTake.paper;
+    syncServerClock(paper.server_now);
+    const timer = $("sheet-timer");
+    if (!paper.closes_at) { timer.classList.add("hidden"); return; }
+    const closesAt = new Date(paper.closes_at).getTime();
+    const tick = () => {
+      const left = closesAt - serverNow();
+      timer.classList.remove("hidden");
+      timer.textContent = left > 0 ? `เหลือเวลา ${formatCountdown(left)}` : "หมดเวลา";
+      timer.style.color = left <= 5 * 60 * 1000 ? "var(--danger)" : "var(--muted)";
+      if (left <= 0) {
+        clearInterval(journey.sheetTimer);
+        journey.sheetTimer = null;
+        autoSubmitSheet();
+      }
+    };
+    tick();
+    if (closesAt > serverNow()) journey.sheetTimer = setInterval(tick, 1000);
+  }
+
+  function scheduleAutosave() {
+    clearTimeout(journey.saveTimer);
+    journey.saveTimer = setTimeout(async () => {
+      const paper = state.examTake.paper;
+      if (!paper || paper.submitted) return;
+      const { data, error } = await db.rpc("exam_save_answers", { p_attempt_id: paper.attempt_id, p_answers: state.examTake.answers });
+      if (error || !data) return; // ออฟไลน์ชั่วคราว: คำตอบยังอยู่ในเครื่อง จะลองอีกครั้งเมื่อแตะครั้งถัดไปหรือตอนส่ง
+      if (!data.ok && data.paper && data.paper.submitted && state.examTake.paper === paper) {
+        writeAnswers(paper.attempt_id, null);
+        showExamResult(data.paper);
+      }
+    }, 1200);
+  }
+
+  async function autoSubmitSheet() {
+    if (journey.autoSubmitting || !state.examTake.paper) return;
+    journey.autoSubmitting = true;
+    clearTimeout(journey.saveTimer);
+    hideSheetConfirm();
+    showToast("หมดเวลาสอบ ระบบกำลังส่งกระดาษคำตอบให้อัตโนมัติ");
+    const paper = state.examTake.paper;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data, error } = await db.rpc("exam_submit", { p_attempt_id: paper.attempt_id, p_answers: state.examTake.answers });
+      if (!error && data && data.ok) {
+        writeAnswers(paper.attempt_id, null);
+        return showExamResult(data);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
+    journey.autoSubmitting = false;
+    showExamError("ส่งอัตโนมัติไม่สำเร็จ", "ตรวจสอบอินเทอร์เน็ตแล้วกดลองอีกครั้ง คำตอบที่ระบายไว้ยังอยู่ในเครื่อง");
   }
 
   function unansweredQuestionNumbers() {
@@ -3578,6 +3735,7 @@
   $("sheet-confirm-yes").addEventListener("click", async () => {
     const paper = state.examTake.paper;
     const button = $("sheet-confirm-yes");
+    clearTimeout(journey.saveTimer);
     setLoading(button, true);
     const { data, error } = await db.rpc("exam_submit", { p_attempt_id: paper.attempt_id, p_answers: state.examTake.answers });
     setLoading(button, false);
@@ -3609,16 +3767,14 @@
     $("result-location").textContent = student.location || "—";
     $("result-time").textContent = formatThaiDateTime(data.submitted_at);
     $("result-next").textContent = examPhase === "pre" ? "ไปทำข้อสอบหลังอบรม" : "ไปทำแบบประเมิน";
+    $("result-auto-note").classList.toggle("hidden", !data.auto_submitted);
+    state.examTake.paper = null;
     showExamStage("result");
   }
 
   $("result-next").addEventListener("click", () => {
     if (examPhase === "pre") return goToPhase("post");
-    const url = new URL(location.href);
-    url.search = ""; url.hash = "";
-    url.searchParams.set("view", "form");
-    url.searchParams.set("activity", urlActivityId);
-    location.href = url.toString();
+    goToEvaluation();
   });
 
   $("result-new").addEventListener("click", () => {
@@ -3702,9 +3858,10 @@
       ["exam-location-list", "exam-question-list", "exam-result-rows"].forEach((id) => $(id).replaceChildren());
       return;
     }
-    const evalKey = `${state.activityId}:${overview.evaluation_opens_at || ""}`;
+    const evalKey = `${state.activityId}:${overview.evaluation_opens_at || ""}:${overview.evaluation_closes_at || ""}`;
     if (state.exam.evalKey !== evalKey && !$("evaluation-schedule-form").contains(document.activeElement)) {
       $("evaluation-opens-input").value = toLocalInputValue(overview.evaluation_opens_at);
+      $("evaluation-closes-input").value = toLocalInputValue(overview.evaluation_closes_at);
       state.exam.evalKey = evalKey;
     }
 
@@ -3717,6 +3874,7 @@
       $("exam-count-input").value = settings.question_count || "";
       $("exam-open-input").checked = settings.is_open !== false;
       $("exam-opens-input").value = toLocalInputValue(settings.opens_at);
+      $("exam-closes-input").value = toLocalInputValue(settings.closes_at);
       state.exam.settingsKey = settingsKey;
     }
     $("exam-count-wrap").classList.toggle("hidden", $("exam-mode-input").value !== "random");
@@ -3779,7 +3937,7 @@
     }
     results.forEach((r, index) => {
       const tr = el("tr");
-      const scoreCell = el("td", "font-bold whitespace-nowrap", r.submitted_at ? `${r.score}/${r.total}` : "กำลังสอบ");
+      const scoreCell = el("td", "font-bold whitespace-nowrap", r.submitted_at ? `${r.score}/${r.total}${r.auto_submitted ? " (ส่งอัตโนมัติ)" : ""}` : "กำลังสอบ");
       if (!r.submitted_at) scoreCell.classList.add("text-[#b7791f]");
       const deleteCell = el("td", "whitespace-nowrap");
       const deleteWrap = el("div", "flex gap-1");
@@ -3829,7 +3987,8 @@
       p_activity_id: state.activityId, p_phase: state.exam.phase,
       p_title: $("exam-title-input").value.trim(), p_question_mode: mode,
       p_question_count: count, p_is_open: $("exam-open-input").checked,
-      p_opens_at: fromLocalInputValue($("exam-opens-input").value)
+      p_opens_at: fromLocalInputValue($("exam-opens-input").value),
+      p_closes_at: fromLocalInputValue($("exam-closes-input").value)
     });
     setLoading(button, false);
     if (error) { if (error.code !== "42501") showToast(friendlyError(error, "บันทึกการตั้งค่าไม่สำเร็จ")); return; }
@@ -3904,8 +4063,8 @@
 
   $("exam-refresh-results").addEventListener("click", loadExamAdmin);
   $("registration-refresh").addEventListener("click", loadExamAdmin);
-  $("exam-opens-clear").addEventListener("click", () => { $("exam-opens-input").value = ""; });
-  $("evaluation-opens-clear").addEventListener("click", () => { $("evaluation-opens-input").value = ""; });
+  $("exam-opens-clear").addEventListener("click", () => { $("exam-opens-input").value = ""; $("exam-closes-input").value = ""; });
+  $("evaluation-opens-clear").addEventListener("click", () => { $("evaluation-opens-input").value = ""; $("evaluation-closes-input").value = ""; });
 
   function toLocalInputValue(iso) {
     if (!iso) return "";
@@ -3923,12 +4082,15 @@
   $("evaluation-schedule-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!state.activityId) return showToast("กรุณาเลือกกิจกรรมก่อน");
+    const evalOpen = fromLocalInputValue($("evaluation-opens-input").value);
+    const evalClose = fromLocalInputValue($("evaluation-closes-input").value);
+    if (evalOpen && evalClose && new Date(evalClose) <= new Date(evalOpen)) return showToast("เวลาปิดต้องอยู่หลังเวลาเปิด");
     const button = event.currentTarget.querySelector("button[type=submit]");
     setLoading(button, true);
-    const { error } = await adminRpc("admin_set_evaluation_opens_at", { p_activity_id: state.activityId, p_opens_at: fromLocalInputValue($("evaluation-opens-input").value) });
+    const { error } = await adminRpc("admin_set_evaluation_schedule", { p_activity_id: state.activityId, p_opens_at: fromLocalInputValue($("evaluation-opens-input").value), p_closes_at: fromLocalInputValue($("evaluation-closes-input").value) });
     setLoading(button, false);
     if (error) { if (error.code !== "42501") showToast(friendlyError(error, "บันทึกเวลาไม่สำเร็จ")); return; }
-    showToast("บันทึกเวลาเปิดแบบประเมินแล้ว");
+    showToast("บันทึกช่วงเวลาแบบประเมินแล้ว");
     state.exam.evalKey = null;
     document.activeElement && document.activeElement.blur && document.activeElement.blur();
     loadExamAdmin();
